@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRC Betting Website</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #343a40;
+            color: white;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: #212529;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+        }
+
+        main {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .competition-selection {
+            background-color: #5b5b5b;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .competition-selection h2 {
+            font-size: 1.8rem;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .tab-btn.active {
+            background-color: #0056b3;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .search-box {
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            width: 80%;
+            max-width: 400px;
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 5px;
+            border: none;
+            text-align: center;
+        }
+
+        #region-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .region-btn {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            padding: 15px;
+            font-size: 1.5rem;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            margin: 10px auto;
+        }
+
+        .region-btn:hover {
+            background-color: #0056b3;
+        }
+
+        footer {
+            background-color: #212529;
+            padding: 10px;
+            text-align: center;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+
+        .account-link {
+            margin-top: 20px;
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .account-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to FRC Betting</h1>
+        <p>Place your bets on FRC competition scores!</p>
+        <!-- Account Link -->
+        <p><a href="account.html" class="account-link">Sign Up / Login</a></p>
+    </header>
+
+    <main>
+        <section class="competition-selection">
+            <h2>Select Your Competition Region</h2>
+            <!-- Tabs to switch between Active, Past, and Upcoming Competitions -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="openTab('active')">Active Competitions</button>
+                <button class="tab-btn" onclick="openTab('past')">Past Competitions</button>
+                <button class="tab-btn" onclick="openTab('upcoming')">Upcoming Competitions</button>
+            </div>
+
+            <!-- Content for Active Competitions -->
+            <div id="active" class="tab-content active">
+                <div class="search-box">
+                    <input type="text" id="search-active" class="search-input" placeholder="Search for an active competition...">
+                </div>
+                <div id="active-region-buttons"><p>Loading active competitions...</p></div>
+            </div>
+
+            <!-- Content for Past Competitions -->
+            <div id="past" class="tab-content">
+                <div class="search-box">
+                    <input type="text" id="search-past" class="search-input" placeholder="Search for a past competition...">
+                </div>
+                <div id="past-region-buttons"><p>Loading past competitions...</p></div>
+            </div>
+
+            <!-- Content for Upcoming Competitions -->
+            <div id="upcoming" class="tab-content">
+                <div class="search-box">
+                    <input type="text" id="search-upcoming" class="search-input" placeholder="Search for an upcoming competition...">
+                </div>
+                <div id="upcoming-region-buttons"><p>Loading upcoming competitions...</p></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 FRC Betting. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const apiKey = '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN';
+        const currentDate = new Date().toISOString().split('T')[0];
+        const activeRegionButtons = document.getElementById('active-region-buttons');
+        const pastRegionButtons = document.getElementById('past-region-buttons');
+        const upcomingRegionButtons = document.getElementById('upcoming-region-buttons');
+        const searchActive = document.getElementById('search-active');
+        const searchPast = document.getElementById('search-past');
+        const searchUpcoming = document.getElementById('search-upcoming');
+
+        let eventsList = [];
+
+        fetch(`https://www.thebluealliance.com/api/v3/events/${new Date().getFullYear()}`, {
+            headers: { 'X-TBA-Auth-Key': apiKey }
+        })
+        .then(response => response.json())
+        .then(events => {
+            eventsList = events;
+            filterAndDisplayEvents('active'); // Default to active events
+        })
+        .catch(error => {
+            console.error('Error fetching events:', error);
+            activeRegionButtons.innerHTML = '<p>Unable to load competitions.</p>';
+        });
+
+        function openTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(button => button.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`button[onclick="openTab('${tabName}')"]`).classList.add('active');
+            filterAndDisplayEvents(tabName); // Filter and display events for the active tab
+        }
+
+        function filterAndDisplayEvents(tab) {
+            let filteredEvents;
+            if (tab === 'active') {
+                filteredEvents = eventsList.filter(event => event.start_date <= currentDate && event.end_date >= currentDate);
+                displayEvents(filteredEvents, activeRegionButtons);
+            } else if (tab === 'past') {
+                filteredEvents = eventsList.filter(event => event.end_date < currentDate);
+                displayEvents(filteredEvents, pastRegionButtons);
+            } else if (tab === 'upcoming') {
+                filteredEvents = eventsList.filter(event => event.start_date > currentDate);
+                displayEvents(filteredEvents, upcomingRegionButtons);
+            }
+        }
+
+        function displayEvents(events, container) {
+            container.innerHTML = '';
+            if (events.length > 0) {
+                events.forEach(event => {
+                    const eventElement = document.createElement('a');
+                    eventElement.href = `templatepage.html?event_code=${event.key}`;
+                    eventElement.className = 'region-btn';
+                    eventElement.textContent = event.name;
+                    container.appendChild(eventElement);
+                });
+            } else {
+                container.innerHTML = '<p>No competitions available.</p>';
+            }
+        }
+
+        // Search functionality for each tab
+        searchActive.addEventListener('input', () => searchAndFilter('active'));
+        searchPast.addEventListener('input', () => searchAndFilter('past'));
+        searchUpcoming.addEventListener('input', () => searchAndFilter('upcoming'));
+
+        function searchAndFilter(tab) {
+            const searchTerm = tab === 'active' ? searchActive.value.toLowerCase() :
+                               tab === 'past' ? searchPast.value.toLowerCase() :
+                               searchUpcoming.value.toLowerCase();
+            let filteredEvents = eventsList.filter(event => event.name.toLowerCase().includes(searchTerm));
+
+            // Reapply tab filtering after search
+            if (tab === 'active') {
+                filteredEvents = filteredEvents.filter(event => event.start_date <= currentDate && event.end_date >= currentDate);
+                displayEvents(filteredEvents, activeRegionButtons);
+            } else if (tab === 'past') {
+                filteredEvents = filteredEvents.filter(event => event.end_date < currentDate);
+                displayEvents(filteredEvents, pastRegionButtons);
+            } else if (tab === 'upcoming') {
+                filteredEvents = filteredEvents.filter(event => event.start_date > currentDate);
+                displayEvents(filteredEvents, upcomingRegionButtons);
+            }
+        }
+    </script>
+</body>
+</html>
