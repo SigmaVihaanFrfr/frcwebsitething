@@ -60,6 +60,7 @@
             cursor: pointer;
             border-radius: 5px;
             font-size: 1rem;
+            transition: transform 0.2s ease-in-out; /* Apply transition to both states */
         }
 
         .tab-btn.active {
@@ -106,6 +107,11 @@
             text-decoration: none;
             border-radius: 10px;
             margin: 10px auto;
+            transition: transform 0.2s ease-in-out; /* Apply transition to both states */
+        }
+
+        .region-btn:hover, .tab-btn:hover {
+            transform: scale(1.1); /* Scales the button up by 10% on hover */
         }
 
         .region-btn:hover {
