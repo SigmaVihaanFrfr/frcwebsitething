@@ -265,6 +265,17 @@
         });
     }
 
+    function getMatchLevelName(compLevel) {
+        const levelNames = {
+            qm: "Qualification",
+            sf: "Semifinals",
+            f: "Finals",
+            qf: "Quarterfinals",
+            ef: "Eighthfinals" // Just in case for offseasons
+        };
+        return levelNames[compLevel] || compLevel;
+    }
+
     function displayMatches(matches, container) {
         container.innerHTML = "";
         if (matches.length > 0) {
@@ -272,13 +283,17 @@
                 const matchElement = document.createElement("a");
                 matchElement.href = `templatepage2.html?match_id=${match.key}`;
                 matchElement.className = "match-btn";
-                matchElement.textContent = `${match.comp_level} Match ${match.match_number}`;
+
+                const matchLevel = getMatchLevelName(match.comp_level);
+                matchElement.textContent = `${matchLevel} Match ${match.match_number}`;
+                
                 container.appendChild(matchElement);
             });
         } else {
             container.innerHTML = "<p>No matches available.</p>";
         }
     }
+
 
     searchUpcoming.addEventListener('input', () => {
         const searchTerm = searchUpcoming.value.toLowerCase();

@@ -29,6 +29,21 @@
             font-size: 2.5rem;
         }
 
+        header p {
+            margin-top: 10px;
+            font-size: 1.2rem;
+        }
+
+        .token-info {
+            margin-top: 15px;
+            font-size: 1.2rem;
+            color: #ddd;
+            padding: 10px 20px;
+            background-color: #5b5b5b;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
         main {
             padding: 20px;
             text-align: center;
@@ -127,50 +142,14 @@
             bottom: 0;
         }
 
-        .account-link {
-            margin-top: 20px;
-            color: #007bff;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 1rem;
-        }
-
-        .account-link:hover {
-            text-decoration: underline;
-        }
-
-        #token-display {
-            margin-top: 10px;
-            font-size: 1rem;
-            color: #ddd;
-        }
-
-        #logout-btn {
-            margin-top: 5px;
-            padding: 5px 10px;
-            background-color: #ff4d4d;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            border-radius: 5px;
-        }
-
-        #logout-btn:hover {
-            background-color: #e60000;
-        }
     </style>
 </head>
 <body>
     <header>
         <h1>Welcome to FRC Betting</h1>
         <p>Place your bets on FRC competition scores!</p>
-        <!-- Account Link -->
-        <p><a href="account.html" class="account-link">Sign Up / Login</a></p>
         <!-- Token Display -->
-        <p id="token-display"></p>
-        <!-- Logout Button -->
-        <button id="logout-btn" style="display: none;">Logout</button>
+        <div class="token-info" id="token-display"></div>
     </header>
 
     <main>
@@ -299,25 +278,10 @@
             }
         }
 
-        // Display token if exists
+        // Display token directly on homepage
         const tokenDisplay = document.getElementById('token-display');
-        const logoutBtn = document.getElementById('logout-btn');
-        const userToken = localStorage.getItem('token');
-
-        if (userToken) {
-            tokenDisplay.textContent = `Logged in as: ${userToken}`;
-            logoutBtn.style.display = 'inline-block';
-        } else {
-            tokenDisplay.textContent = 'You are not logged in.';
-        }
-
-        // Logout button functionality
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                localStorage.removeItem('token');
-                location.reload(); // Refresh the page
-            });
-        }
+        const tokens = localStorage.getItem('tokens') || 0;
+        tokenDisplay.textContent = `Your Tokens: ${tokens}`;
     </script>
 </body>
 </html>
