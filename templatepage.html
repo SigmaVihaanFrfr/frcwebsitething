@@ -285,8 +285,22 @@
                 matchElement.className = "match-btn";
 
                 const matchLevel = getMatchLevelName(match.comp_level);
-                matchElement.textContent = `${matchLevel} Match ${match.match_number}`;
-                
+                const matchTime = new Date(match.time * 1000);
+                const formattedDate = matchTime.toLocaleString('en-US', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                });
+
+                matchElement.innerHTML = `
+                    <strong>${matchLevel} Match ${match.match_number}</strong><br>
+                    <small>${formattedDate}</small>
+                `;
+
                 container.appendChild(matchElement);
             });
         } else {

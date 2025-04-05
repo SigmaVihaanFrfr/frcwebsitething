@@ -246,7 +246,14 @@
                     const eventElement = document.createElement('a');
                     eventElement.href = `templatepage.html?event_code=${event.key}`;
                     eventElement.className = 'region-btn';
-                    eventElement.textContent = event.name;
+
+                    const startDate = new Date(event.start_date).toLocaleDateString('en-US');
+                    const endDate = new Date(event.end_date).toLocaleDateString('en-US');
+                    eventElement.innerHTML = `
+                        <strong>${event.name}</strong><br>
+                        <span style="font-size: 1rem;">${startDate} - ${endDate}</span>
+                    `;
+
                     container.appendChild(eventElement);
                 });
             } else {
