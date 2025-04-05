@@ -60,7 +60,7 @@
             cursor: pointer;
             border-radius: 5px;
             font-size: 1rem;
-            transition: transform 0.2s ease-in-out; /* Apply transition to both states */
+            transition: transform 0.2s ease-in-out;
         }
 
         .tab-btn.active {
@@ -107,11 +107,11 @@
             text-decoration: none;
             border-radius: 10px;
             margin: 10px auto;
-            transition: transform 0.2s ease-in-out; /* Apply transition to both states */
+            transition: transform 0.2s ease-in-out;
         }
 
         .region-btn:hover, .tab-btn:hover {
-            transform: scale(1.1); /* Scales the button up by 10% on hover */
+            transform: scale(1.1);
         }
 
         .region-btn:hover {
@@ -138,6 +138,27 @@
         .account-link:hover {
             text-decoration: underline;
         }
+
+        #token-display {
+            margin-top: 10px;
+            font-size: 1rem;
+            color: #ddd;
+        }
+
+        #logout-btn {
+            margin-top: 5px;
+            padding: 5px 10px;
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 5px;
+        }
+
+        #logout-btn:hover {
+            background-color: #e60000;
+        }
     </style>
 </head>
 <body>
@@ -146,6 +167,10 @@
         <p>Place your bets on FRC competition scores!</p>
         <!-- Account Link -->
         <p><a href="account.html" class="account-link">Sign Up / Login</a></p>
+        <!-- Token Display -->
+        <p id="token-display"></p>
+        <!-- Logout Button -->
+        <button id="logout-btn" style="display: none;">Logout</button>
     </header>
 
     <main>
@@ -272,6 +297,26 @@
                 filteredEvents = filteredEvents.filter(event => event.start_date > currentDate);
                 displayEvents(filteredEvents, upcomingRegionButtons);
             }
+        }
+
+        // Display token if exists
+        const tokenDisplay = document.getElementById('token-display');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userToken = localStorage.getItem('token');
+
+        if (userToken) {
+            tokenDisplay.textContent = `Logged in as: ${userToken}`;
+            logoutBtn.style.display = 'inline-block';
+        } else {
+            tokenDisplay.textContent = 'You are not logged in.';
+        }
+
+        // Logout button functionality
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('token');
+                location.reload(); // Refresh the page
+            });
         }
     </script>
 </body>

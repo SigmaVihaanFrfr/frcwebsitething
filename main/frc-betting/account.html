@@ -6,13 +6,6 @@
     <title>FRC Betting - Account</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* Styles for the account system (basic form styling) */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
             font-family: 'Roboto', sans-serif;
             background-color: #343a40;
@@ -20,36 +13,20 @@
             text-align: center;
             line-height: 1.6;
         }
-
-        header {
-            background-color: #212529;
-            padding: 20px;
-        }
-
-        main {
-            padding: 20px;
-        }
-
         .account-box {
             background-color: #5b5b5b;
             padding: 20px;
             border-radius: 8px;
-            margin-top: 20px;
             max-width: 400px;
-            margin-left: auto;
-            margin-right: auto;
+            margin: 20px auto;
         }
-
         .input-field {
             width: 80%;
-            max-width: 300px;
             padding: 10px;
             margin: 10px;
             border-radius: 5px;
             border: none;
-            font-size: 1rem;
         }
-
         button {
             padding: 10px;
             color: white;
@@ -57,60 +34,12 @@
             cursor: pointer;
             border-radius: 5px;
             width: 80%;
-            max-width: 300px;
             margin-top: 10px;
         }
-
-        .primary-button {
-            background-color: #007bff;
-        }
-
-        .primary-button:hover {
-            background-color: #0056b3;
-        }
-
-        .red-button {
-            background-color: #f44336;
-        }
-
-        .red-button:hover {
-            background-color: #d32f2f;
-        }
-
-        .link {
-            margin-top: 20px;
-            color: #007bff;
-            cursor: pointer;
-        }
-
-        .link:hover {
-            text-decoration: underline;
-        }
-
-        footer {
-            background-color: #212529;
-            padding: 10px;
-            text-align: center;
-            position: fixed;
-            width: 100%;
-            bottom: 0;
-        }
-
-        /* Mobile responsiveness */
-        @media (max-width: 600px) {
-            .input-field, button {
-                width: 90%;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            .account-box {
-                width: 90%;
-                padding: 15px;
-            }
-        }
+        .primary-button { background-color: #007bff; }
+        .primary-button:hover { background-color: #0056b3; }
+        .red-button { background-color: #f44336; }
+        .red-button:hover { background-color: #d32f2f; }
     </style>
 </head>
 <body>
@@ -144,88 +73,38 @@
     </footer>
 
     <script>
-        // Toggle between login and signup forms
         function toggleAuthForm(formType) {
-            if (formType === 'signup') {
-                document.getElementById('auth-section').style.display = 'none';
-                document.getElementById('signup-section').style.display = 'block';
-            } else {
-                document.getElementById('auth-section').style.display = 'block';
-                document.getElementById('signup-section').style.display = 'none';
-            }
+            document.getElementById('auth-section').style.display = formType === 'signup' ? 'none' : 'block';
+            document.getElementById('signup-section').style.display = formType === 'signup' ? 'block' : 'none';
         }
 
-        // Enhanced login validation
-        function login() {
-            const username = document.getElementById('login-username').value.trim();
-            const password = document.getElementById('login-password').value.trim();
-
-            if (username === '' || password === '') {
-                alert('Please enter both username and password');
-                return;
-            }
-
-            if (password.length < 6) {
-                alert('Password must be at least 6 characters long');
-                return;
-            }
-
-            // Send login request to the server
-            fetch('login.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Login successful');
-                    window.location.href = 'homepage.html'; // Redirect to the homepage after successful login
-                } else {
-                    alert('Invalid login credentials');
-                }
-            })
-            .catch(error => {
-                console.error('Error logging in:', error);
-                alert('Error logging in. Please try again.');
-            });
-        }
-
-        // Enhanced signup validation
         function signup() {
             const username = document.getElementById('signup-username').value.trim();
             const password = document.getElementById('signup-password').value.trim();
             const confirmPassword = document.getElementById('signup-password-confirm').value.trim();
 
-            if (username === '' || password === '' || confirmPassword === '') {
+            if (!username || !password || !confirmPassword) {
                 alert('Please fill in all fields');
                 return;
             }
-
             if (password.length < 6) {
                 alert('Password must be at least 6 characters long');
                 return;
             }
-
             if (password !== confirmPassword) {
                 alert('Passwords do not match');
                 return;
             }
 
-            // Send signup request to the server
-            fetch('signup.php', {
+            fetch('/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    alert('Sign up successful');
-                    toggleAuthForm('login');
-                } else {
-                    alert('Error signing up');
-                }
+                alert(data.success ? 'Sign up successful! You can now log in.' : `Sign up failed: ${data.message}`);
+                if (data.success) toggleAuthForm('login');
             })
             .catch(error => {
                 console.error('Error signing up:', error);

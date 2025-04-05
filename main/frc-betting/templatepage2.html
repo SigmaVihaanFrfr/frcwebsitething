@@ -1,27 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Match Details</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet"/>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Roboto', sans-serif; background-color: #343a40; color: white; text-align: center; }
-        header { 
-            background-color: #212529; 
-            padding: 20px;
-            position: relative; 
-        }
-        #token-display { 
-            position: absolute; 
-            top: 20px; 
-            right: 20px; 
-            background-color: #17a2b8; 
-            padding: 10px 15px; 
-            border-radius: 5px; 
-            font-size: 16px; 
-        }
+        header { background-color: #212529; padding: 20px; position: relative; }
+        #token-display { position: absolute; top: 20px; right: 20px; background-color: #17a2b8; padding: 10px 15px; border-radius: 5px; font-size: 16px; }
         main { padding: 20px; }
         .match-box { background-color: #5b5b5b; padding: 20px; border-radius: 8px; margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; }
         .bet-container { background-color: #2c3034; padding: 15px; border-radius: 8px; margin-top: 20px; color: #e0e0e0; }
@@ -46,7 +34,6 @@
 
 <header>
     <h1 id="match-title">Match Details</h1>
-    <!-- Token display in the top right corner -->
     <div id="token-display">Tokens: <span id="token-count">1000</span></div>
 </header>
 
@@ -84,17 +71,26 @@
     const matchId = params.get("match_id");
 
     let betAmount = 0;
-    let tokenAmount = 1000;  // Initial tokens
+    let tokenAmount = parseInt(localStorage.getItem("tokens")) || 1000;
     let betsPlaced = {};
+    let matchResult = { played: false };
 
-    // Update token display
     function updateTokenDisplay() {
         document.getElementById("token-count").textContent = tokenAmount;
+        localStorage.setItem("tokens", tokenAmount);
     }
+
+    updateTokenDisplay();
 
     if (!matchId) {
         document.getElementById("match-title").textContent = "No match ID provided.";
     } else {
+        // Check if the user has already placed a bet on this match
+        if (localStorage.getItem(`bet_${matchId}`) === "true") {
+            alert("You have already placed a bet on this match.");
+            disableBetting();  // Disable the betting buttons to prevent further interaction
+        }
+
         fetch(`https://www.thebluealliance.com/api/v3/match/${matchId}`, {
             headers: { 'X-TBA-Auth-Key': '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN' }
         })
@@ -104,17 +100,30 @@
             const bettingContainer = document.getElementById("betting-section");
             const videoContainer = document.getElementById("video-container");
 
+            const redScore = match.alliances.red.score;
+            const blueScore = match.alliances.blue.score;
+            const winningAlliance = match.winning_alliance;
+            const played = redScore !== -1 && blueScore !== -1;
+
+            matchResult = {
+                redScore,
+                blueScore,
+                winningAlliance,
+                played
+            };
+
             matchInfoContainer.innerHTML = `
-                <div class="red-alliance"><h3>Red Alliance</h3><p>Teams: ${match.alliances.red.team_keys.map(t => t.replace("frc", "")).join(", ")}</p></div>
-                <div class="blue-alliance"><h3>Blue Alliance</h3><p>Teams: ${match.alliances.blue.team_keys.map(t => t.replace("frc", "")).join(", ")}</p></div>
+                <div class="red-alliance"><h3>Red Alliance</h3><p>Teams: ${match.alliances.red.team_keys.map(t => t.replace("frc", "")).join(", ")}</p><p>Score: ${played ? redScore : "?"}</p></div>
+                <div class="blue-alliance"><h3>Blue Alliance</h3><p>Teams: ${match.alliances.blue.team_keys.map(t => t.replace("frc", "")).join(", ")}</p><p>Score: ${played ? blueScore : "?"}</p></div>
             `;
 
             bettingContainer.innerHTML = `
-                <div><h3>Bet on Red Alliance Score</h3><button data-bet="red" onclick="placeBet('red', 'over')">Over</button><button data-bet="red" onclick="placeBet('red', 'under')">Under</button></div>
-                <div><h3>Bet on Blue Alliance Score</h3><button data-bet="blue" onclick="placeBet('blue', 'over')">Over</button><button data-bet="blue" onclick="placeBet('blue', 'under')">Under</button></div>
+                <div><h3>Bet on Red Alliance Score</h3><button data-bet="red" onclick="placeBet('red', 'over')">Over 125</button><button data-bet="red" onclick="placeBet('red', 'under')">Under 125</button></div>
+                <div><h3>Bet on Blue Alliance Score</h3><button data-bet="blue" onclick="placeBet('blue', 'over')">Over 125</button><button data-bet="blue" onclick="placeBet('blue', 'under')">Under 125</button></div>
                 <div><h3>Bet on Winning Alliance</h3><button data-bet="winner" onclick="placeBet('winner', 'red')">Red</button><button data-bet="winner" onclick="placeBet('winner', 'blue')">Blue</button></div>
                 <div><h3>Bet on Total Match Score</h3><button data-bet="total" onclick="placeBet('total', 'over')">Over 250</button><button data-bet="total" onclick="placeBet('total', 'under')">Under 250</button></div>
                 <div><h3>Bet on Margin of Victory</h3><button data-bet="margin" onclick="placeBet('margin', 'high')">Margin > 30</button><button data-bet="margin" onclick="placeBet('margin', 'low')">Margin ≤ 30</button></div>
+                <div id="results-box" style="margin-top: 20px;"></div>
             `;
 
             if (match.videos && match.videos.length > 0) {
@@ -122,73 +131,92 @@
             } else {
                 videoContainer.innerHTML = `<p>No video available for this match.</p>`;
             }
-
-            // Actual match result
-            const redScore = match.alliances.red.score;
-            const blueScore = match.alliances.blue.score;
-            const winningAlliance = match.winning_alliance;  // 'red' or 'blue'
-            
-            // Store the actual match result for later use
-            matchResult = {
-                redScore,
-                blueScore,
-                winningAlliance
-            };
         });
     }
 
     function placeBet(type, choice) {
-        // Allow the user to select a bet without deducting tokens yet
         document.querySelectorAll(`button[data-bet="${type}"]`).forEach(btn => btn.classList.remove("selected"));
         event.target.classList.add("selected");
         betsPlaced[type] = choice;
-
-        // Enable the lock and reset buttons
         document.getElementById("lock-btn").disabled = false;
         document.getElementById("reset-btn").disabled = false;
     }
 
     function lockBets() {
-        if (betAmount > tokenAmount) {
+        const totalBets = Object.keys(betsPlaced).length;
+
+        if (betAmount * totalBets > tokenAmount) {
             alert("Not enough tokens to lock the bet.");
             return;
         }
 
-        // Deduct tokens from the player when locking bets
-        tokenAmount -= betAmount * Object.keys(betsPlaced).length;  // Deduct for all bets placed
+        tokenAmount -= betAmount * totalBets;
         updateTokenDisplay();
 
-        // Now, evaluate the bets based on the actual match result
-        const matchOutcome = evaluateBets();
-
-        // Simulate outcome: Win or Lose (based on actual result)
-        if (matchOutcome) {
-            alert("You won the bet(s)! Your tokens have been added.");
-            tokenAmount += betAmount * 2 * Object.keys(betsPlaced).length; // Double the wagered tokens for each bet placed
-        } else {
-            alert("You lost the bet(s). Better luck next time.");
-        }
-
-        updateTokenDisplay(); // Update token count after win/loss
-
-        // Disable all betting buttons after locking bets
         document.querySelectorAll(".bet-container button").forEach(btn => btn.disabled = true);
         document.getElementById("lock-btn").textContent = "Locked";
         document.getElementById("lock-btn").disabled = true;
+
+        localStorage.setItem(`bet_${matchId}`, "true");  // Mark the match as bet on
+
+        if (!matchResult.played) {
+            document.getElementById("results-box").innerHTML = `<p style="color: yellow;">Bets locked! Match hasn't happened yet. Come back later to see results.</p>`;
+            return;
+        }
+
+        const results = evaluateBets();
+        document.getElementById("results-box").innerHTML = results.summary;
+
+        if (results.correctCount > 0) {
+            const winnings = betAmount * 2 * results.correctCount;
+            tokenAmount += winnings;
+            alert(`You won ${results.correctCount} bet(s)! You've earned ${winnings} tokens.`);
+        } else {
+            alert("You lost all your bets. Better luck next time.");
+        }
+
+        updateTokenDisplay();
     }
 
     function evaluateBets() {
-        let betIsCorrect = true;
+        let correctCount = 0;
+        let summary = `<h3>Bet Results:</h3><ul style="text-align:left; display:inline-block;">`;
 
-        // Check if the user has made a bet and evaluate it
         for (let [type, choice] of Object.entries(betsPlaced)) {
-            if (type === "winner") {
-                betIsCorrect = betIsCorrect && choice === matchResult.winningAlliance;
+            let outcome = false;
+            let message = "";
+
+            switch (type) {
+                case "winner":
+                    outcome = choice === matchResult.winningAlliance;
+                    message = `You picked ${choice} to win. Actual winner: ${matchResult.winningAlliance}`;
+                    break;
+                case "red":
+                    outcome = choice === (matchResult.redScore > 125 ? "over" : "under");
+                    message = `Red Score = ${matchResult.redScore} → ${choice.toUpperCase()} 125?`;
+                    break;
+                case "blue":
+                    outcome = choice === (matchResult.blueScore > 125 ? "over" : "under");
+                    message = `Blue Score = ${matchResult.blueScore} → ${choice.toUpperCase()} 125?`;
+                    break;
+                case "total":
+                    const total = matchResult.redScore + matchResult.blueScore;
+                    outcome = choice === (total > 250 ? "over" : "under");
+                    message = `Total Score = ${total} → ${choice.toUpperCase()} 250?`;
+                    break;
+                case "margin":
+                    const margin = Math.abs(matchResult.redScore - matchResult.blueScore);
+                    outcome = choice === (margin > 30 ? "high" : "low");
+                    message = `Victory Margin = ${margin} → ${choice === "high" ? "> 30?" : "≤ 30?"}`;
+                    break;
             }
-            // Additional logic for other bets (over/under) can be added here
+
+            summary += `<li>${message} — <strong style="color:${outcome ? 'lightgreen' : 'salmon'}">${outcome ? 'Correct' : 'Wrong'}</strong></li>`;
+            if (outcome) correctCount++;
         }
 
-        return betIsCorrect;
+        summary += "</ul>";
+        return { correctCount, summary };
     }
 
     function resetBets() {
@@ -196,17 +224,21 @@
             btn.classList.remove("selected");
             btn.disabled = false;
         });
-        betsPlaced = {};
-        document.getElementById("lock-btn").textContent = "Lock Bets";
         document.getElementById("lock-btn").disabled = true;
         document.getElementById("reset-btn").disabled = true;
+        betsPlaced = {};
     }
 
-    // Increase or decrease bet amount
     function changeBetAmount(amount) {
-        betAmount += amount;
-        if (betAmount < 0) betAmount = 0; // Ensure the bet amount doesn't go negative
+        betAmount = Math.max(0, betAmount + amount);
         document.getElementById("bet-amount-input").value = betAmount;
+    }
+
+    function disableBetting() {
+        document.querySelectorAll(".bet-container button").forEach(btn => btn.disabled = true);
+        document.getElementById("reset-btn").disabled = true;
+        document.getElementById("lock-btn").disabled = true;
+        document.getElementById("bet-amount-input").disabled = true;  // Disable bet amount input as well
     }
 </script>
 
