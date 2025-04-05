@@ -135,6 +135,7 @@
       if (lockedBetData) {
         disableBetting();
         document.getElementById("claim-btn").style.display = "inline-block";
+        document.getElementById("claim-btn").disabled = false;
 
         if (played && !lockedBetData.processed) {
             document.getElementById("results-box").innerHTML = `<p style="color: yellow;">Match is complete! Click "Claim Winnings" to see your results.</p>`;
