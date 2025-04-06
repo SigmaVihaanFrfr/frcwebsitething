@@ -10,12 +10,33 @@
   <title>Match Details</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet"/>
   <style>
+    @keyframes stripeSlide {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: -28.28px 28.28px;
+            }
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Roboto', sans-serif; background-color: #343a40; color: white; text-align: center; }
     header { background-color: #212529; padding: 20px; position: relative; }
     #token-display { position: absolute; top: 20px; right: 20px; background-color: #17a2b8; padding: 10px 15px; border-radius: 5px; font-size: 16px; }
     main { padding: 20px; }
-    .match-box { background-color: #5b5b5b; padding: 20px; border-radius: 8px; margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .match-box {             background-color: #5b5b5b;
+            background-image: repeating-linear-gradient(
+                45deg,
+                #5b5b5b,
+                #5b5b5b 10px,
+                #4e4e4e 10px,
+                #4e4e4e 20px
+            );
+            background-size: 28.28px 28.28px;
+            animation: stripeSlide 4s linear infinite;
+
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;}
     .bet-container { background-color: #2c3034; padding: 15px; border-radius: 8px; margin-top: 20px; color: #e0e0e0; }
     .bet-container button { padding: 5px 10px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 5px; margin: 5px; transition: 0.3s; }
     .bet-container button:hover { background: #218838; }

@@ -6,11 +6,23 @@
     <title>FRC Betting Website</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+
+        @keyframes stripeSlide {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: -28.28px 28.28px;
+            }
+        }
+
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
 
         body {
             font-family: 'Roboto', sans-serif;
@@ -18,6 +30,8 @@
             color: white;
             line-height: 1.6;
         }
+
+
 
         header {
             background-color: #212529;
@@ -51,10 +65,21 @@
 
         .competition-selection {
             background-color: #5b5b5b;
+            background-image: repeating-linear-gradient(
+                45deg,
+                #5b5b5b,
+                #5b5b5b 10px,
+                #4e4e4e 10px,
+                #4e4e4e 20px
+            );
+            background-size: 28.28px 28.28px;
+            animation: stripeSlide 4s linear infinite;
+
             padding: 20px;
             border-radius: 8px;
             margin-top: 20px;
         }
+
 
         .competition-selection h2 {
             font-size: 1.8rem;
@@ -302,7 +327,8 @@
         const redeemCodes = {
             "FRC100": { tokens: 100, expires: "2025-06-01" },
             "EXTRABOOST": { tokens: 50, expires: null }, // null = no expiration
-            "APRIL2025": { tokens: 150, expires: "2025-04-30" }
+            "APRIL2025": { tokens: 150, expires: "2025-04-30" },
+            "BEARBOTICS": { tokens: 300, expires: "2025-12-30" }
         };
 
         function redeemCode() {

@@ -6,6 +6,16 @@
     <title>Competition Details</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        
+        @keyframes stripeSlide {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: -28.28px 28.28px;
+            }
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -31,13 +41,19 @@
 
         .competition-box {
             background-color: #5b5b5b;
+            background-image: repeating-linear-gradient(
+                45deg,
+                #5b5b5b,
+                #5b5b5b 10px,
+                #4e4e4e 10px,
+                #4e4e4e 20px
+            );
+            background-size: 28.28px 28.28px;
+            animation: stripeSlide 4s linear infinite;
+
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-top: 20px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
         }
 
         .tabs {
