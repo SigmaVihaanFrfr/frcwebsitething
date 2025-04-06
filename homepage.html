@@ -186,6 +186,14 @@
                 <div id="upcoming-region-buttons"><p>Loading upcoming competitions...</p></div>
             </div>
         </section>
+        <section class="competition-selection" style="margin-top: 40px;">
+            <h2>Redeem a Code</h2>
+            <div>
+                <input type="text" id="redeem-code-input" placeholder="Enter your code..." class="search-input" style="max-width: 300px;">
+                <button onclick="redeemCode()" class="tab-btn" style="margin-top: 10px;">Redeem</button>
+                <p id="redeem-message" style="margin-top: 10px; color: #ffc107;"></p>
+            </div>
+        </section>        
     </main>
 
     <footer>
@@ -289,6 +297,57 @@
         const tokenDisplay = document.getElementById('token-display');
         const tokens = localStorage.getItem('tokens') || 0;
         tokenDisplay.textContent = `Your Tokens: ${tokens}`;
+
+        // Sample redeem codes - you can modify or load from a server eventually
+        const redeemCodes = {
+            "FRC100": { tokens: 100, expires: "2025-06-01" },
+            "EXTRABOOST": { tokens: 50, expires: null }, // null = no expiration
+            "APRIL2025": { tokens: 150, expires: "2025-04-30" }
+        };
+
+        function redeemCode() {
+            const input = document.getElementById('redeem-code-input').value.trim().toUpperCase();
+            const message = document.getElementById('redeem-message');
+
+            if (!input || !redeemCodes[input]) {
+                message.textContent = "Invalid code.";
+                message.style.color = "red";
+                return;
+            }
+
+            const codeData = redeemCodes[input];
+
+            // Check if code is expired
+            if (codeData.expires && new Date() > new Date(codeData.expires)) {
+                message.textContent = "Code expired.";
+                message.style.color = "red";
+                return;
+            }
+
+            // Check if already redeemed
+            const usedCodes = JSON.parse(localStorage.getItem("redeemedCodes") || "[]");
+            if (usedCodes.includes(input)) {
+                message.textContent = "Code already redeemed.";
+                message.style.color = "red";
+                return;
+            }
+
+            // Grant tokens
+            let currentTokens = parseInt(localStorage.getItem('tokens') || "0");
+            currentTokens += codeData.tokens;
+            localStorage.setItem('tokens', currentTokens);
+            tokenDisplay.textContent = `Your Tokens: ${currentTokens}`;
+
+            // Mark code as used
+            usedCodes.push(input);
+            localStorage.setItem("redeemedCodes", JSON.stringify(usedCodes));
+
+            message.textContent = `Success! You received ${codeData.tokens} tokens.`;
+            message.style.color = "#28a745"; // Green
+
+            document.getElementById('redeem-code-input').value = "";
+        }
+
     </script>
 </body>
 </html>

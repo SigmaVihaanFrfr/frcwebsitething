@@ -180,26 +180,33 @@
   }
 
   function claimWinnings() {
-    if (!lockedBetData || lockedBetData.processed) return;
+  if (!lockedBetData || lockedBetData.processed) return;
 
-    betsPlaced = lockedBetData.bets;
-    betAmount = lockedBetData.amount;
-    const results = evaluateBets();
-    document.getElementById("results-box").innerHTML = results.summary;
-
-    if (results.correctCount > 0) {
-      const winnings = betAmount * 2 * results.correctCount;
-      tokenAmount += winnings;
-      alert(`You won ${results.correctCount} bet(s)! You earned ${winnings} tokens.`);
-    } else {
-      alert("You lost all your bets. Better luck next time.");
-    }
-
-    updateTokenDisplay();
-    lockedBetData.processed = true;
-    localStorage.setItem(`locked_bet_${matchId}`, JSON.stringify(lockedBetData));
-    document.getElementById("claim-btn").style.display = "none";
+  // Check if the match has been played before allowing claims
+  if (!matchResult.played) {
+    alert("The match hasn't been played yet. You can claim winnings after the match is complete.");
+    return;
   }
+
+  betsPlaced = lockedBetData.bets;
+  betAmount = lockedBetData.amount;
+  const results = evaluateBets();
+  document.getElementById("results-box").innerHTML = results.summary;
+
+  if (results.correctCount > 0) {
+    const winnings = betAmount * 2 * results.correctCount;
+    tokenAmount += winnings;
+    alert(`You won ${results.correctCount} bet(s)! You earned ${winnings} tokens.`);
+  } else {
+    alert("You lost all your bets. Better luck next time.");
+  }
+
+  updateTokenDisplay();
+  lockedBetData.processed = true;
+  localStorage.setItem(`locked_bet_${matchId}`, JSON.stringify(lockedBetData));
+  document.getElementById("claim-btn").style.display = "none";
+}
+
 
   function evaluateBets() {
     let correctCount = 0;
