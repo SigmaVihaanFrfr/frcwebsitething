@@ -102,6 +102,8 @@
     .then(match => {
       const redScore = match.alliances.red.score;
       const blueScore = match.alliances.blue.score;
+      matchResult.redFouls = match.score_breakdown?.red?.foulPoints ?? 0;
+      matchResult.blueFouls = match.score_breakdown?.blue?.foulPoints ?? 0;
       const winningAlliance = match.winning_alliance;
       const played = redScore !== -1 && blueScore !== -1;
 
@@ -124,6 +126,9 @@
         <div><h3>Bet on Winning Alliance</h3><button data-bet="winner" onclick="placeBet('winner', 'red')">Red</button><button data-bet="winner" onclick="placeBet('winner', 'blue')">Blue</button></div>
         <div><h3>Bet on Total Match Score</h3><button data-bet="total" onclick="placeBet('total', 'over')">Over 250</button><button data-bet="total" onclick="placeBet('total', 'under')">Under 250</button></div>
         <div><h3>Bet on Margin of Victory</h3><button data-bet="margin" onclick="placeBet('margin', 'high')">Margin > 30</button><button data-bet="margin" onclick="placeBet('margin', 'low')">Margin ≤ 30</button></div>
+        <div><h3>Bet on Red Alliance Fouls</h3><button data-bet="redFouls" onclick="placeBet('redFouls', 'over')">Over 10</button><button data-bet="redFouls" onclick="placeBet('redFouls', 'under')">Under 10</button></div>
+        <div><h3>Bet on Blue Alliance Fouls</h3><button data-bet="blueFouls" onclick="placeBet('blueFouls', 'over')">Over 10</button><button data-bet="blueFouls" onclick="placeBet('blueFouls', 'under')">Under 10</button></div>
+        <div><h3>Bet on Tie Match</h3><button data-bet="tie" onclick="placeBet('tie', 'yes')">Yes</button><button data-bet="tie" onclick="placeBet('tie', 'no')">No</button></div>
       `;
 
       if (match.videos?.length > 0) {
@@ -238,6 +243,23 @@
           const margin = Math.abs(matchResult.redScore - matchResult.blueScore);
           outcome = choice === (margin > 30 ? "high" : "low");
           message = `Margin = ${margin} → ${choice === "high" ? "> 30?" : "≤ 30?"}`;
+          break;
+        case "redFouls":
+          const redFouls = matchResult.redFouls ?? 0;
+          outcome = choice === (redFouls > 10 ? "over" : "under");
+          message = `Red Fouls = ${redFouls} → ${choice.toUpperCase()} 10?`;
+          break;
+
+        case "blueFouls":
+          const blueFouls = matchResult.blueFouls ?? 0;
+          outcome = choice === (blueFouls > 10 ? "over" : "under");
+          message = `Blue Fouls = ${blueFouls} → ${choice.toUpperCase()} 10?`;
+          break;
+
+        case "tie":
+          const isTie = matchResult.redScore === matchResult.blueScore;
+          outcome = (choice === "yes" && isTie) || (choice === "no" && !isTie);
+          message = `Tie Match? → You picked ${choice.toUpperCase()}, Actual: ${isTie ? "YES" : "NO"}`;
           break;
       }
 
