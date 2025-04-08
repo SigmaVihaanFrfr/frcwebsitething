@@ -167,6 +167,19 @@
             bottom: 0;
         }
 
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column; /* Stack the tab buttons vertically on smaller screens */
+                align-items: center; /* Center align the tab buttons */
+            }
+
+            .tab-btn {
+                width: 100%; /* Make each tab button take up full width */
+                margin: 5px 0; /* Space between buttons */
+                padding: 12px; /* Make buttons more tappable */
+            }
+        }
+
     </style>
 </head>
 <body>
