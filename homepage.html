@@ -185,6 +185,7 @@
                 <button class="tab-btn active" onclick="openTab('active')">Active Competitions</button>
                 <button class="tab-btn" onclick="openTab('past')">Past Competitions</button>
                 <button class="tab-btn" onclick="openTab('upcoming')">Upcoming Competitions</button>
+                <button class="tab-btn" onclick="openTab('leaderboard')">Leaderboard</button>
             </div>
 
             <!-- Content for Active Competitions -->
@@ -211,6 +212,13 @@
                 <div id="upcoming-region-buttons"><p>Loading upcoming competitions...</p></div>
             </div>
         </section>
+        <!-- Content for Leaderboard -->
+            <div id="leaderboard" class="tab-content">
+                <section class="competition-selection" style="margin-top: 40px; margin-bottom: 40px;">
+                <h3 style="margin: 20px 0;">Top Token Holders</h3>
+                <ul id="leaderboard-list" style="list-style: none; padding: 0;"></ul>
+                </section>
+            </div>
         <section class="competition-selection" style="margin-top: 40px; margin-bottom: 40px;">
             <h2>Redeem a Code</h2>
             <div>
@@ -222,7 +230,7 @@
     </main>
 
     <footer>
-        <p>&copy; 2025 FRC Betting. All rights reserved.</p>
+        <p>2025 FRC Betting. NOT ASSOCIATED WITH FRC.</p>
     </footer>
 
     <script>
@@ -256,6 +264,9 @@
             document.getElementById(tabName).classList.add('active');
             document.querySelector(`button[onclick="openTab('${tabName}')"]`).classList.add('active');
             filterAndDisplayEvents(tabName); // Filter and display events for the active tab
+            if (tabName === 'leaderboard') {
+                updateLeaderboard();
+            }
         }
 
         function filterAndDisplayEvents(tab) {
@@ -373,7 +384,33 @@
 
             document.getElementById('redeem-code-input').value = "";
         }
+        const sampleUsers = [
+            { name: "The leaderboard tab is currently a WIP", tokens: 850 },
+            { name: "In the mean time, here's a preview on how it will work!", tokens: 740 },
+            { name: "(Why are you still reading?)", tokens: 620 }
+        ];
 
+        function updateLeaderboard() {
+            const currentUserTokens = parseInt(localStorage.getItem('tokens') || "0");
+            const currentUser = { name: "You", tokens: currentUserTokens };
+
+            // Merge and sort
+            const leaderboard = [currentUser, ...sampleUsers]
+                .sort((a, b) => b.tokens - a.tokens);
+
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = "";
+
+            leaderboard.forEach((user, index) => {
+                const item = document.createElement('li');
+                item.innerHTML = `
+                    <span style="font-weight: bold;">#${index + 1}:</span> 
+                    ${user.name} – <span style="color: #ffc107;">${user.tokens} tokens</span>
+                `;
+                item.style.marginBottom = "10px";
+                list.appendChild(item);
+            });
+        }
     </script>
 </body>
 </html>
