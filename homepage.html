@@ -28,6 +28,20 @@
             }
         }
 
+        #team-banner {
+            background-color: #ffcc00;
+            color: #000;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 500;
+            font-size: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
 
         * {
             margin: 0;
@@ -195,6 +209,7 @@
     </style>
 </head>
 <body>
+    
     <header>
         <h1>Welcome to FRC Betting</h1>
         <p>Place your bets on FRC competition scores!</p>
@@ -202,6 +217,11 @@
         <div class="token-info" id="token-display"></div>
             <button class="tab-btn" onclick="location.href='settingspage.html'">Open Settings</button>     
     </header>
+
+    <div id="team-banner" style="display: none;">
+        <span id="banner-text"></span>
+        <button onclick="dismissBanner()" style="margin-left: auto; background: none; color: inherit; border: none; font-size: 1.2em; cursor: pointer;">✕</button>
+    </div>
 
     <main>
         <section class="competition-selection">
@@ -439,6 +459,88 @@
                 list.appendChild(item);
             });
         }
+
+    const TBA_AUTH_KEY = '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN';
+
+    async function fetchTeamStats(teamNumber) {
+        const teamKey = `frc${teamNumber}`;
+        const year = new Date().getFullYear();
+
+        const headers = {
+            'X-TBA-Auth-Key': TBA_AUTH_KEY
+        };
+
+        try {
+            const [teamInfo, events, matches] = await Promise.all([
+                fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}`, { headers }).then(res => res.json()),
+                fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/events/${year}`, { headers }).then(res => res.json()),
+                fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/matches/${year}`, { headers }).then(res => res.json())
+            ]);
+
+            return generateFactsFromData(teamInfo, events, matches);
+        } catch (err) {
+            console.error("TBA fetch error:", err);
+            return [`Could not load team ${teamNumber}'s stats.`];
+        }
+    }
+
+    function generateFactsFromData(info, events, matches) {
+        const facts = [];
+
+        if (info.nickname) facts.push(`Team ${info.team_number} is known as "${info.nickname}".`);
+        if (info.city) facts.push(`Team ${info.team_number} is based in ${info.city}, ${info.state_prov || ''}.`);
+        if (events.length) facts.push(`Team ${info.team_number} has participated in ${events.length} events this season.`);
+
+        const wins = matches.filter(m => {
+            const alliance = m.alliances?.[m.winning_alliance]?.team_keys || [];
+            return alliance.includes(`frc${info.team_number}`);
+        }).length;
+
+        if (matches.length) {
+            const winRate = Math.round((wins / matches.length) * 100);
+            facts.push(`Team ${info.team_number} has a win rate of ${winRate}% this season.`);
+        }
+
+        if (matches.length) {
+            const lastMatch = matches[matches.length - 1];
+            const compLevel = lastMatch.comp_level.toUpperCase();
+            facts.push(`Team ${info.team_number}'s last match was at ${lastMatch.event_key}, level ${compLevel}.`);
+        }
+
+        return facts.length ? facts : [`No stats available yet for team ${info.team_number}.`];
+    }
+
+    async function startTeamBannerNotifications() {
+        const favTeam = localStorage.getItem('favTeam');
+        const notificationsEnabled = localStorage.getItem('notifications') === 'true';
+        if (!favTeam || !notificationsEnabled) return;
+
+        const banner = document.getElementById('team-banner');
+        const bannerText = document.getElementById('banner-text');
+
+        const facts = await fetchTeamStats(favTeam);
+        if (!facts.length) return;
+
+        let current = 0;
+        function showNextFact() {
+            bannerText.textContent = `🤖 ${facts[current % facts.length]}`;
+            banner.style.display = 'flex';
+            current++;
+        }
+
+        showNextFact();
+        const intervalId = setInterval(showNextFact, 10000);
+        banner.dataset.intervalId = intervalId;
+    }
+
+    function dismissBanner() {
+        const banner = document.getElementById('team-banner');
+        const intervalId = banner.dataset.intervalId;
+        if (intervalId) clearInterval(intervalId);
+        banner.style.display = 'none';
+    }
+
+    startTeamBannerNotifications();
     </script>
 </body>
 </html>
