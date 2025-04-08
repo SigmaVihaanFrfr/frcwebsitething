@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings - FRC Betting</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        input[type="text"], select {
+            width: 100%;
+            padding: 14px 16px; /* Increased padding */
+            margin-top: 4px;
+            margin-bottom: 12px; /* Added bottom margin for better spacing */
+            margin-right: 12px;
+            font-size: 1rem;
+            border-radius: 8px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: none;
+            outline: none;
+        }
+        :root {
+            --bg-color: #343a40;
+            --text-color: white;
+            --card-bg: #495057;
+            --input-bg: #6c757d;
+            --btn-color: #007bff;
+            --btn-hover: #0056b3;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        .settings-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .settings-option {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: 500;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 8px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: none;
+            outline: none;
+        }
+
+        .checkbox {
+            transform: scale(1.2);
+            margin-right: 8px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background-color: var(--btn-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--btn-hover);
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .back-button {
+            margin-top: 30px;
+            background-color: gray;
+        }
+    </style>
+</head>
+<body>
+    <h1>Settings</h1>
+    <div class="settings-container">
+        <div class="settings-option">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter your username" style="margin-left: -10px;">
+        </div>
+
+        <div class="settings-option">
+            <label for="favTeam">Favorite Team Number</label>
+            <input type="text" id="favTeam" placeholder="e.g., 2358" style="margin-left: -10px;>
+        </div>
+
+        <div class="settings-option">
+            <label>
+                <input type="checkbox" id="notifications" class="checkbox">
+                Enable Match Notifications
+            </label>
+        </div>
+
+        <div class="settings-option">
+            <label>
+                <input type="checkbox" id="betConfirm" class="checkbox">
+                Confirm Before Placing Bets
+            </label>
+        </div>
+
+        <div class="settings-option btn-group">
+            <button class="btn" onclick="saveSettings()">Save Settings</button>
+            <button class="btn" onclick="resetSettings()">Reset All</button>
+        </div>
+
+        <button class="btn back-button" onclick="location.href='homepage.html'">Back to Homepage</button>
+    </div>
+
+    <script>
+        const usernameInput = document.getElementById('username');
+        const favTeamInput = document.getElementById('favTeam');
+        const notificationsCheckbox = document.getElementById('notifications');
+        const betConfirmCheckbox = document.getElementById('betConfirm');
+
+        // Load saved settings
+        window.onload = () => {
+            usernameInput.value = localStorage.getItem('username') || '';
+            favTeamInput.value = localStorage.getItem('favTeam') || '';
+            notificationsCheckbox.checked = localStorage.getItem('notifications') === 'true';
+            betConfirmCheckbox.checked = localStorage.getItem('betConfirm') === 'true';
+        };
+
+        function saveSettings() {
+            localStorage.setItem('username', usernameInput.value);
+            localStorage.setItem('favTeam', favTeamInput.value);
+            localStorage.setItem('notifications', notificationsCheckbox.checked);
+            localStorage.setItem('betConfirm', betConfirmCheckbox.checked);
+            alert('Settings saved!');
+        }
+
+        function resetSettings() {
+            if (confirm("Are you sure you want to reset all settings?")) {
+                localStorage.removeItem('username');
+                localStorage.removeItem('favTeam');
+                localStorage.removeItem('notifications');
+                localStorage.removeItem('betConfirm');
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
