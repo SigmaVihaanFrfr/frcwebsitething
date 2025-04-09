@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" sizes="32x32" href="browserlogo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Google Sheets POST Test">
+    <link rel="apple-touch-icon" href="logo.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets POST Test</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        header {
+            background-color: #212529;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .competition-box {
+            background-color: #5b5b5b;
+            background-image: repeating-linear-gradient(
+                45deg,
+                #5b5b5b,
+                #5b5b5b 10px,
+                #4e4e4e 10px,
+                #4e4e4e 20px
+            );
+            background-size: 28.28px 28.28px;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            animation: stripeSlide 4s linear infinite;
+        }
+
+        @keyframes stripeSlide {
+            0% { background-position: 0 0; }
+            100% { background-position: -28.28px 28.28px; }
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        pre {
+            background: #f4f4f4;
+            color: black;
+            padding: 1em;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 1rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px;
+            background: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            width: 200px;
+            text-align: center;
+        }
+
+        .back-btn:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Send Leaderboard Stats</h1>
+</header>
+
+<main>
+    <div class="competition-box">
+        <div style="margin-bottom: 20px;">
+            <h3>🪙 Tokens: <span id="token-count">0</span></h3>
+        </div>
+
+        <button id="sendData">Send Your Token Stats</button>
+        <pre id="output">Click the button to send your current token stats.</pre>
+
+        <a href="homepage.html" class="back-btn">Back to Main Page</a>
+    </div>
+</main>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwM2_qotmNiKmXcjODGbURi4EiqTIQxSnotEBY3rZPwEmpnLNi7MxYXYmTCd_ldH0vE/exec";
+
+    // TOKEN SYSTEM
+    function getTokens() {
+        return parseInt(localStorage.getItem('tokens')) || 0;
+    }
+
+    function setTokens(value) {
+        localStorage.setItem('tokens', value);
+        updateTokenDisplay();
+    }
+
+    function updateTokenDisplay() {
+        document.getElementById("token-count").textContent = getTokens();
+    }
+
+    if (localStorage.getItem('tokens') === null) {
+        localStorage.setItem('tokens', '1000'); // Set initial tokens if not available
+    }
+
+    updateTokenDisplay();
+
+    document.getElementById("sendData").addEventListener("click", async () => {
+        const output = document.getElementById("output");
+
+        // Get the username and tokens from localStorage
+        const username = localStorage.getItem("username");
+        const tokens = localStorage.getItem("tokens");
+
+        if (!username || !tokens) {
+            output.textContent = "Error: Username or tokens not found in localStorage.";
+            return;
+        }
+
+        const data = {
+            name: username,
+            tokens: parseInt(tokens) // Ensure tokens are treated as a number
+        };
+
+        output.textContent = "Sending data: " + JSON.stringify(data, null, 2);
+
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            output.textContent += "\n\nRequest sent!";
+        } catch (error) {
+            output.textContent = "Fetch Error:\n" + error;
+        }
+    });
+</script>
+
+</body>
+</html>
