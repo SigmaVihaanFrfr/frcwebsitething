@@ -593,69 +593,129 @@
     }
 
     async function loadTopTeams() {
-    const topTeamsList = document.getElementById('top-teams-list');
-    topTeamsList.innerHTML = '<li>Loading top teams...</li>';
+        const topTeamsList = document.getElementById('top-teams-list');
+        topTeamsList.innerHTML = '<li>Loading top teams...</li>';
 
-    try {
-        const response = await fetch('https://www.thebluealliance.com/api/v3/events/2025/simple', {
-            headers: { 'X-TBA-Auth-Key': apiKey }
-        });
+        const favTeamNumber = localStorage.getItem("favTeam");
+        const favTeamKey = favTeamNumber ? `frc${favTeamNumber}` : null;
 
-        const events = await response.json();
-        if (!events.length) throw new Error('No events found.');
-
-        const rankings = [];
-        
-        // Fetch rankings from up to 5 recent events for speed
-        const selectedEvents = events.slice(0, 5);
-
-        for (const event of selectedEvents) {
-            const rankingRes = await fetch(`https://www.thebluealliance.com/api/v3/event/${event.key}/rankings`, {
+        try {
+            const response = await fetch('https://www.thebluealliance.com/api/v3/events/2025/simple', {
                 headers: { 'X-TBA-Auth-Key': apiKey }
             });
-            const rankingData = await rankingRes.json();
 
-            if (rankingData.rankings) {
-                rankingData.rankings.forEach(r => {
-                    rankings.push({
-                        team_key: r.team_key,
-                        qualPoints: r.extra_stats ? r.extra_stats[0] : r.sort_orders?.[0] || 0
-                    });
+            const events = await response.json();
+            if (!events.length) throw new Error('No events found.');
+
+            const rankings = [];
+            const selectedEvents = events.slice(0, 5);
+
+            for (const event of selectedEvents) {
+                const rankingRes = await fetch(`https://www.thebluealliance.com/api/v3/event/${event.key}/rankings`, {
+                    headers: { 'X-TBA-Auth-Key': apiKey }
                 });
+                const rankingData = await rankingRes.json();
+
+                if (rankingData.rankings) {
+                    rankingData.rankings.forEach(r => {
+                        rankings.push({
+                            team_key: r.team_key,
+                            qualPoints: r.extra_stats ? r.extra_stats[0] : r.sort_orders?.[0] || 0
+                        });
+                    });
+                }
             }
-        }
 
-        // Aggregate by team and sort
-        const teamStats = {};
-        rankings.forEach(({ team_key, qualPoints }) => {
-            if (!teamStats[team_key]) teamStats[team_key] = 0;
-            teamStats[team_key] += qualPoints;
-        });
-
-        const sortedTeams = Object.entries(teamStats)
-            .sort((a, b) => b[1] - a[1]) // Sort by total points descending
-            .slice(0, 100); // Top 100
-
-        // Fetch team nicknames
-        const teamDetails = await Promise.all(sortedTeams.map(async ([teamKey]) => {
-            const res = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}`, {
-                headers: { 'X-TBA-Auth-Key': apiKey }
+            // Aggregate points by team
+            const teamStats = {};
+            rankings.forEach(({ team_key, qualPoints }) => {
+                if (!teamStats[team_key]) teamStats[team_key] = 0;
+                teamStats[team_key] += qualPoints;
             });
-            return await res.json();
-        }));
 
-        topTeamsList.innerHTML = '';
-        teamDetails.forEach((team, index) => {
-            const li = document.createElement('li');
-            li.style.marginBottom = '10px';
-            li.innerHTML = `<strong>#${index + 1}</strong>: ${team.nickname || team.team_number} (Team ${team.team_number})`;
-            topTeamsList.appendChild(li);
-        });
-    } catch (error) {
-        console.error('Error loading top teams:', error);
-        topTeamsList.innerHTML = '<li>Error loading teams. Please try again later.</li>';
+            const allSortedTeams = Object.entries(teamStats)
+                .sort((a, b) => b[1] - a[1]); // Global rank sorted
+
+            const top100 = allSortedTeams.slice(0, 100);
+
+            const teamDetailMap = {};
+
+            // Fetch top 100 team details
+            const topTeamDetails = await Promise.all(top100.map(async ([teamKey]) => {
+                const res = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}`, {
+                    headers: { 'X-TBA-Auth-Key': apiKey }
+                });
+                const data = await res.json();
+                teamDetailMap[teamKey] = data;
+                return { ...data, teamKey };
+            }));
+
+            let favTeamData = null;
+            let favTeamGlobalRank = -1;
+
+            if (favTeamKey) {
+                // Check if favorite team is in the top 100 or needs to be fetched separately
+                favTeamGlobalRank = allSortedTeams.findIndex(([key]) => key === favTeamKey) + 1;
+
+                if (!teamDetailMap[favTeamKey]) {
+                    // Fetch favorite team details if not already in top 100
+                    const res = await fetch(`https://www.thebluealliance.com/api/v3/team/${favTeamKey}`, {
+                        headers: { 'X-TBA-Auth-Key': apiKey }
+                    });
+                    favTeamData = await res.json();
+                } else {
+                    favTeamData = teamDetailMap[favTeamKey];
+                }
+
+                // Don't give a rank to the favorite team if it's not in the top 100
+                if (favTeamGlobalRank === 0) {
+                    favTeamGlobalRank = null;
+                }
+            }
+
+            topTeamsList.innerHTML = '';
+
+            // 🐻 Add favorite team to the top if it has data
+            if (favTeamKey && favTeamData) {
+                const li = document.createElement('li');
+                li.style.marginBottom = '15px';
+                li.style.border = '2px solid gold';
+                li.style.borderRadius = '8px';
+                li.style.padding = '10px';
+                li.style.backgroundColor = '#2d2d2d';
+
+                const emoji = favTeamData.team_number === 2358 ? '🐻' : '⭐️';
+
+                if (favTeamGlobalRank) {
+                    li.innerHTML = `
+                        ${emoji} <strong>Your Favorite</strong>: ${favTeamData.nickname || `Team ${favTeamData.team_number}`} 
+                        (Team ${favTeamData.team_number}) is globally ranked <strong>#${favTeamGlobalRank}</strong>.
+                    `;
+                } else {
+                    li.innerHTML = `
+                        ${emoji} <strong>Your Favorite</strong>: ${favTeamData.nickname || `Team ${favTeamData.team_number}`} 
+                        (Team ${favTeamData.team_number}) is not in the top 100.
+                    `;
+                }
+
+                topTeamsList.appendChild(li);
+            }
+
+            // Now list top 100 (skip favorite if it was already shown)
+            topTeamDetails.forEach((team, index) => {
+                if (team.teamKey === favTeamKey) return; // already shown at top
+
+                const li = document.createElement('li');
+                li.style.marginBottom = '10px';
+                li.innerHTML = `<strong>#${index + 1}</strong>: ${team.nickname || `Team ${team.team_number}`} (Team ${team.team_number})`;
+                topTeamsList.appendChild(li);
+            });
+
+        } catch (error) {
+            console.error('Error loading top teams:', error);
+            topTeamsList.innerHTML = '<li>Error loading teams. Please try again later.</li>';
+        }
     }
-}
 
 // Function to display the Update Log
     function displayUpdateLog() {
@@ -663,8 +723,9 @@
         
         // Sample update log entries (you can replace this with dynamic data)
         const updateLogs = [
-            "Version 1.1 (April 9th 2025) - Added Update Log.",
-            "Version 1.0 (April 4th 2025) - Inital Website Release."
+            "Version 1.15 (April 9th 2025) - Made the Top 100s tab also display the selected favorite team's ranking (if ranked in the top 100)",
+            "Version 1.1 (April 9th 2025) - Added Update Log",
+            "Version 1.0 (April 4th 2025) - Inital Website Release"
         ];
         
         updateLogList.innerHTML = '';  // Clear existing content
