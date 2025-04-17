@@ -113,7 +113,7 @@
   const matchId = params.get("match_id");
 
   let betAmount = 0;
-  let tokenAmount = parseInt(localStorage.getItem("tokens")) || 1000;
+  let tokenAmount = parseInt(localStorage.getItem("tokens"));
   let betsPlaced = {};
   let matchResult = { played: false };
   let lockedBetData = JSON.parse(localStorage.getItem(`locked_bet_${matchId}`)) || null;
@@ -161,7 +161,6 @@
         <div><h3>Bet on Margin of Victory</h3><button data-bet="margin" onclick="placeBet('margin', 'high')">Margin > 30</button><button data-bet="margin" onclick="placeBet('margin', 'low')">Margin ≤ 30</button></div>
         <div><h3>Bet on Red Alliance Fouls</h3><button data-bet="redFouls" onclick="placeBet('redFouls', 'over')">Over 10</button><button data-bet="redFouls" onclick="placeBet('redFouls', 'under')">Under 10</button></div>
         <div><h3>Bet on Blue Alliance Fouls</h3><button data-bet="blueFouls" onclick="placeBet('blueFouls', 'over')">Over 10</button><button data-bet="blueFouls" onclick="placeBet('blueFouls', 'under')">Under 10</button></div>
-        <div><h3>Bet on Tie Match</h3><button data-bet="tie" onclick="placeBet('tie', 'yes')">Yes</button><button data-bet="tie" onclick="placeBet('tie', 'no')">No</button></div>
       `;
 
       if (match.videos?.length > 0) {
