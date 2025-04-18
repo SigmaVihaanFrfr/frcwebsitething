@@ -701,26 +701,32 @@
     }
 
 // Function to display the Update Log
-    function displayUpdateLog() {
-        const updateLogList = document.getElementById('update-log-list');
-        
-        // Sample update log entries (you can replace this with dynamic data)
-        const updateLogs = [
-            "Version 1.2 (April 17th 2025) - Removed the Tie Game bet",
-            "Version 1.15 (April 9th 2025) - Made the Top 100s tab also display the selected favorite team's ranking (if ranked in the top 100)",
-            "Version 1.1 (April 9th 2025) - Added Update Log",
-            "Version 1.0 (April 4th 2025) - Inital Website Release"
-        ];
-        
-        updateLogList.innerHTML = '';  // Clear existing content
+function displayUpdateLog() {
+    const updateLogList = document.getElementById('update-log-list');
+    const sheetUrl = 'https://script.google.com/macros/s/AKfycbwbpkJu2Up_xI3TDd4g1nejGbkcdZC6savdpK3T7fx42XKBunwicLQ4PkCP86QIDB0/exec';  // Replace with your Google Apps Script URL
 
-        // Loop through the update logs and display them
-        updateLogs.forEach(log => {
-            const listItem = document.createElement('li');
-            listItem.textContent = log;
-            updateLogList.appendChild(listItem);
+    fetch(sheetUrl)
+        .then(response => response.json())  // Assuming your Apps Script returns JSON data
+        .then(updateLogs => {
+            updateLogList.innerHTML = '';  // Clear existing content
+
+            // Check if updateLogs is an array and not empty
+            if (Array.isArray(updateLogs) && updateLogs.length > 0) {
+                // Loop through the update logs and display them
+                updateLogs.forEach(log => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `Version ${log.Version} (${log.Date}) - ${log.Message}`;
+                    updateLogList.appendChild(listItem);
+                });
+            } else {
+                updateLogList.textContent = 'No update logs available.';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching update logs:', error);
+            updateLogList.innerHTML = 'Error loading update log.';
         });
-    }
+}
 
 
     loadTopTeams();
