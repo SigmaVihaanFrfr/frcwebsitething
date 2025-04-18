@@ -466,50 +466,33 @@
         ];
 
         async function updateLeaderboard() {
-    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUfiskG5pw77RwewE22jPCvlkHBTGyg0cbcoTCEnrvQVnr506V8teYsY72itaaWvdWnVKt1SjM1iEl/pub?gid=0&single=true&output=csv";
+  const url = 'https://script.google.com/macros/s/AKfycbxSKKEEYW2TB1NXuDdKx5bNGstwka4VDOIfNPH5DsxYNa38HKyaTTFeeNPrX2AA5CVOVA/exec';
 
-    try {
-        const response = await fetch(sheetUrl);
-        const csvText = await response.text();
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+      mode: "cors"
+    });
 
-        const rows = csvText.trim().split('\n').slice(1); // Skip header
-        const leaderboard = rows.map(row => {
-            const [name, tokens] = row.split(",");
-            return {
-                name: name.trim(),
-                tokens: parseInt(tokens.trim())
-            };
-        });
+    const leaderboard = await response.json();
 
-        // Get current user's data from localStorage
-        const currentUserName = localStorage.getItem("username");
-        const currentUserTokens = parseInt(localStorage.getItem("tokens")) || 0;
+    leaderboard.sort((a, b) => b.Tokens - a.Tokens);
 
-        // Add current user to the leaderboard if not already present
-        const currentUser = { name: currentUserName, tokens: currentUserTokens };
-        const isCurrentUserPresent = leaderboard.some(user => user.name === currentUserName);
+    const leaderboardList = document.getElementById("leaderboard-list");
+    leaderboardList.innerHTML = "";
 
-        if (!isCurrentUserPresent) {
-            leaderboard.push(currentUser); // Add current user if not present
-        }
-
-        // Sort leaderboard by tokens in descending order
-        leaderboard.sort((a, b) => b.tokens - a.tokens);
-
-        // Render the leaderboard
-        const leaderboardList = document.getElementById("leaderboard-list");
-        leaderboardList.innerHTML = ""; // Clear previous leaderboard
-
-        leaderboard.forEach((user, index) => {
-            const listItem = document.createElement("li");
-            listItem.style.margin = "10px 0";
-            listItem.innerHTML = `<strong>#${index + 1}</strong> - ${user.name}: ${user.tokens} tokens`;
-            leaderboardList.appendChild(listItem);
-        });
-
-    } catch (error) {
-        console.error("Error fetching leaderboard:", error);
-    }
+    leaderboard.forEach((user, index) => {
+      const listItem = document.createElement("li");
+      listItem.style.margin = "10px 0";
+      listItem.innerHTML = `<strong>#${index + 1}</strong> - ${user.Name}: ${user.Tokens} tokens`;
+      leaderboardList.appendChild(listItem);
+    });
+  } catch (err) {
+    console.error("Error fetching leaderboard:", err);
+  }
 }
 
     const TBA_AUTH_KEY = '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN';
