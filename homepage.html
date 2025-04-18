@@ -715,7 +715,7 @@ function displayUpdateLog() {
                 // Loop through the update logs and display them
                 updateLogs.forEach(log => {
                     const listItem = document.createElement('li');
-                    listItem.textContent = `Version ${log.Version} (${log.Date}) - ${log.Message}`;
+                    listItem.textContent = `v${log.Version} (${log.Date}) - ${log.Message}`;
                     updateLogList.appendChild(listItem);
                 });
             } else {
