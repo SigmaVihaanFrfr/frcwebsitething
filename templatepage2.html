@@ -113,6 +113,18 @@
   const matchId = params.get("match_id");
 
   let betAmount = 0;
+    document.getElementById("bet-amount-input").addEventListener("input", function(event) {
+    const value = event.target.value;
+
+    // Only allow numeric values and update betAmount
+    if (/^\d+$/.test(value) || value === "") {
+      betAmount = value === "" ? 0 : parseInt(value);
+      updatePayoutDisplay(); // Update payout display
+    } else {
+      // If invalid input, revert to the previous valid amount
+      event.target.value = betAmount;
+    }
+  });
   let tokenAmount = parseInt(localStorage.getItem("tokens"));
   let betsPlaced = {};
   let matchResult = { played: false };
