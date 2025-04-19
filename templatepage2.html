@@ -263,7 +263,7 @@
 }
 
 
-  function evaluateBets() {
+function evaluateBets() {
     let correctCount = 0;
     let summary = `<h3>Bet Results:</h3><ul style="text-align:left; display:inline-block;">`;
 
@@ -278,11 +278,11 @@
           break;
         case "red":
           outcome = choice === (matchResult.redScore > rawAvgRed ? "over" : "under");
-          message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} <div id="redEvaluate1PredictionDiv">125</div>?`;
+          message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} ${rawAvgRed}`;
           break;
         case "blue":
           outcome = choice === (matchResult.blueScore > rawAvgBlue ? "over" : "under");
-          message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} <div id="blueEvaluate1PredictionDiv">125</div>?`;
+          message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} ${rawAvgBlue}`;
           break;
         case "total":
           const total = matchResult.redScore + matchResult.blueScore;
