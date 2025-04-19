@@ -173,7 +173,7 @@
         <div><h3>Bet on Red Alliance Score</h3><button data-bet="red" onclick="placeBet('red', 'over')">Over <div id="redOverPredictionDiv">125</div></button><button data-bet="red" onclick="placeBet('red', 'under')">Under <div id="redUnderPredictionDiv">125</div></button></div>
         <div><h3>Bet on Blue Alliance Score</h3><button data-bet="blue" onclick="placeBet('blue', 'over')">Over <div id="blueOverPredictionDiv">125</div></button><button data-bet="blue" onclick="placeBet('blue', 'under')">Under <div id="blueUnderPredictionDiv">125</div></button></div>
         <div><h3>Bet on Winning Alliance</h3><button data-bet="winner" onclick="placeBet('winner', 'red')">Red</button><button data-bet="winner" onclick="placeBet('winner', 'blue')">Blue</button></div>
-        <div><h3>Bet on Total Match Score</h3><button data-bet="total" onclick="placeBet('total', 'over')">Over 250</button><button data-bet="total" onclick="placeBet('total', 'under')">Under 250</button></div>
+        <div><h3>Bet on Total Match Score</h3><button data-bet="total" onclick="placeBet('total', 'over')">Over <div id="totalPredictionDiv">250</div></button><button data-bet="total" onclick="placeBet('total', 'under')">Under <div id="totalPredictionDiv">250</div></button></div>
         <div><h3>Bet on Margin of Victory</h3><button data-bet="margin" onclick="placeBet('margin', 'high')">Margin > 30</button><button data-bet="margin" onclick="placeBet('margin', 'low')">Margin ≤ 30</button></div>
         <div><h3>Bet on Red Alliance Fouls</h3><button data-bet="redFouls" onclick="placeBet('redFouls', 'over')">Over 10</button><button data-bet="redFouls" onclick="placeBet('redFouls', 'under')">Under 10</button></div>
         <div><h3>Bet on Blue Alliance Fouls</h3><button data-bet="blueFouls" onclick="placeBet('blueFouls', 'over')">Over 10</button><button data-bet="blueFouls" onclick="placeBet('blueFouls', 'under')">Under 10</button></div>
@@ -232,7 +232,7 @@
     document.getElementById("results-box").innerHTML = `<p style="color: yellow;">Bets locked! Match hasn't happened yet. Come back later to claim winnings.</p>`;
   }
 
-  function claimWinnings() {
+  async function claimWinnings() {
     if (!lockedBetData) {
         alert("No locked bet data found for this match.");
         return;
@@ -240,7 +240,6 @@
 
     if (lockedBetData.processed) {
         alert("You’ve already claimed your winnings for this match.");
-        return;
     }
 
     // Check if the match has been played before allowing claims
@@ -253,9 +252,13 @@
     console.log("Locked Bet Data: ", lockedBetData);
     console.log("Match Result: ", matchResult);
     
+    // Fetch the prediction data before proceeding with evaluation
+    await fetchPredictionData(); // Wait for the prediction data to be fetched
+
     betsPlaced = lockedBetData.bets;
     betAmount = lockedBetData.amount;
-    const results = evaluateBets();
+
+    const results = evaluateBets(); // Now that prediction data is available, we can evaluate the bets
     
     // Log the results
     console.log("Bet Results: ", results);
@@ -277,64 +280,77 @@
 }
 
 
+let predictionData = {}; // Declare a global variable to store prediction data
+
+// Fetch prediction data and then call evaluateBets
+async function fetchPredictionData() {
+  predictionData = await predictScores();
+  evaluateBets(); // Now that prediction data is available, evaluate bets
+}
+
+// The evaluateBets function
 function evaluateBets() {
-  predictScores();
-    let correctCount = 0;
-    let summary = `<h3>Bet Results:</h3><ul style="text-align:left; display:inline-block;">`;
+  
+  const redPredict = (Math.round(predictionData.rawAvgRed / 5) * 5 - 10);
+  const bluePredict = (Math.round(predictionData.rawAvgBlue / 5) * 5 - 10);
+  const totalPredictionValue = redPredict + bluePredict;
 
-    for (let [type, choice] of Object.entries(betsPlaced)) {
-      let outcome = false;
-      let message = "";
+  let correctCount = 0;
+  let summary = `<h3>Bet Results:</h3><ul style="text-align:left; display:inline-block;">`;
 
-      switch (type) {
-        case "winner":
-          outcome = choice === matchResult.winningAlliance;
-          message = `You picked ${choice} to win. Actual: ${matchResult.winningAlliance}`;
-          break;
-        case "red":
-          outcome = choice === (matchResult.redScore > predictScores().avgRed ? "over" : "under");
-          message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} ${predictScores().avgRed}`;
-          break;
-        case "blue":
-          outcome = choice === (matchResult.blueScore > predictScores().avgBlue ? "over" : "under");
-          message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} ${predictScores().avgBlue}`;
-          break;
-        case "total":
-          const total = matchResult.redScore + matchResult.blueScore;
-          outcome = choice === (total > 250 ? "over" : "under");
-          message = `Total = ${total} → ${choice.toUpperCase()} 250?`;
-          break;
-        case "margin":
-          const margin = Math.abs(matchResult.redScore - matchResult.blueScore);
-          outcome = choice === (margin > 30 ? "high" : "low");
-          message = `Margin = ${margin} → ${choice === "high" ? "> 30?" : "≤ 30?"}`;
-          break;
-        case "redFouls":
-          const redFouls = matchResult.redFouls ?? 0;
-          outcome = choice === (redFouls > 10 ? "over" : "under");
-          message = `Red Fouls = ${redFouls} → ${choice.toUpperCase()} 10?`;
-          break;
+  for (let [type, choice] of Object.entries(betsPlaced)) {
+    let outcome = false;
+    let message = "";
 
-        case "blueFouls":
-          const blueFouls = matchResult.blueFouls ?? 0;
-          outcome = choice === (blueFouls > 10 ? "over" : "under");
-          message = `Blue Fouls = ${blueFouls} → ${choice.toUpperCase()} 10?`;
-          break;
+    switch (type) {
+      case "winner":
+        outcome = choice === matchResult.winningAlliance;
+        message = `You picked ${choice} to win. Actual: ${matchResult.winningAlliance}`;
+        break;
+      case "red":
+        outcome = choice === (matchResult.redScore > redPredict ? "over" : "under");
+        message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} ${redPredict}`;
+        break;
+      case "blue":
+        outcome = choice === (matchResult.blueScore > bluePredict ? "over" : "under");
+        message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} ${bluePredict}`;
+        break;
+      case "total":
+        const total = matchResult.redScore + matchResult.blueScore;
+        outcome = choice === (total > totalPredictionValue ? "over" : "under");
+        message = `Total = ${total} → ${choice.toUpperCase()} ${totalPredictionValue}`;
+        break;
+      case "margin":
+        const margin = Math.abs(matchResult.redScore - matchResult.blueScore);
+        outcome = choice === (margin > 30 ? "high" : "low");
+        message = `Margin = ${margin} → ${choice === "high" ? "> 30?" : "≤ 30?"}`;
+        break;
+      case "redFouls":
+        const redFouls = matchResult.redFouls ?? 0;
+        outcome = choice === (redFouls > 10 ? "over" : "under");
+        message = `Red Fouls = ${redFouls} → ${choice.toUpperCase()} 10?`;
+        break;
 
-        case "tie":
-          const isTie = matchResult.redScore === matchResult.blueScore;
-          outcome = (choice === "yes" && isTie) || (choice === "no" && !isTie);
-          message = `Tie Match? → You picked ${choice.toUpperCase()}, Actual: ${isTie ? "YES" : "NO"}`;
-          break;
-      }
+      case "blueFouls":
+        const blueFouls = matchResult.blueFouls ?? 0;
+        outcome = choice === (blueFouls > 10 ? "over" : "under");
+        message = `Blue Fouls = ${blueFouls} → ${choice.toUpperCase()} 10?`;
+        break;
 
-      summary += `<li>${message} — <strong style="color:${outcome ? 'lightgreen' : 'salmon'}">${outcome ? 'Correct' : 'Wrong'}</strong></li>`;
-      if (outcome) correctCount++;
+      case "tie":
+        const isTie = matchResult.redScore === matchResult.blueScore;
+        outcome = (choice === "yes" && isTie) || (choice === "no" && !isTie);
+        message = `Tie Match? → You picked ${choice.toUpperCase()}, Actual: ${isTie ? "YES" : "NO"}`;
+        break;
     }
 
-    summary += "</ul>";
-    return { correctCount, summary };
+    summary += `<li>${message} — <strong style="color:${outcome ? 'lightgreen' : 'salmon'}">${outcome ? 'Correct' : 'Wrong'}</strong></li>`;
+    if (outcome) correctCount++;
   }
+
+  summary += "</ul>";
+  return { correctCount, summary };
+}
 
   function resetBets() {
     document.querySelectorAll(".bet-container button").forEach(btn => {
@@ -407,7 +423,7 @@ function updatePayoutDisplay() {
 
   const TBA_AUTH_KEY = '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN'; // Replace with your TBA key
 
-async function predictScores() {
+  async function predictScores() {
   const matchKey = params.get("match_id");
   const resultsDiv = document.getElementById('results');
   const nowUnix = Math.floor(Date.now() / 1000);
@@ -553,10 +569,24 @@ async function updateRedUnderAllianceScore() {
   predictionDiv.innerHTML = `${roundedAvgRed}`;
 }
 
+async function updateTotalScore() {
+  const predictions = await predictScores(); // Get the predicted scores
+
+  // Round the Blue Alliance avg score to the nearest 5
+  const roundedTotalAvg = ((Math.round(predictions.avgRed / 5) * 5 - 10) + (Math.round(predictions.avgBlue / 5) * 5 - 10));
+
+  // Get the div where you want to update the Blue Alliance score
+  const totalPredictionDiv = document.getElementById('totalPredictionDiv');
+
+  // Replace the content of the div with the rounded Blue Alliance avg score
+  totalPredictionDiv.innerHTML = `${roundedTotalAvg}`;
+}
+
 updateBlueOverAllianceScore();
 updateRedOverAllianceScore();
 updateBlueUnderAllianceScore();
 updateRedUnderAllianceScore();
+updateTotalScore();
 </script>
 
 <!-- <div id="blueOverPredictionDiv">125</div>
