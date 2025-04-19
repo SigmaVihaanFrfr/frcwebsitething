@@ -4,6 +4,80 @@
   <meta charset="UTF-8">
   <title>Predicted Match Score</title>
   <style>
+
+/* Scrollable container for the match stats */
+.match-stats-container {
+  max-height: 400px; /* Adjust the height as needed */
+  overflow-y: auto; /* Enable vertical scrolling */
+  padding-right: 10px; /* Prevent content from touching the scroll bar */
+  scrollbar-width: thin; /* Make the scrollbar thinner */
+  scrollbar-color: #888 #f1f1f1; /* Style the scrollbar (color for thumb and track) */
+}
+
+/* Optional: Styling for the scrollbar on Webkit browsers (Chrome, Safari) */
+.match-stats-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.match-stats-container::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+}
+
+.match-stats-container::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+/* Styling for match stats */
+.match-stats {
+  margin-bottom: 20px;
+  padding: 15px;
+  border-radius: 10px;
+  background-color: #575757; /* Light grey background for the entire match box */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Red Alliance Box (Pastel Red) */
+.red-team {
+  background-color: rgba(255, 99, 71, 0.2); /* Pastel red */
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.red-team strong {
+  color: #ff9090; /* Darker red for the strong text */
+}
+
+/* Blue Alliance Box (Pastel Blue) */
+.blue-team {
+  background-color: rgba(70, 130, 180, 0.2); /* Pastel blue */
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.blue-team strong {
+  color: #8ac5ff; /* Darker blue for the strong text */
+}
+
+/* Styling for opponent info */
+.opponent-info {
+  margin-top: 10px;
+  font-style: italic;
+}
+
+h4 {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #cbcbcb;
+}
+
+p {
+  font-size: 1em;
+  color: #555;
+}
+
     /* Add new modal styling */
     .team-info-modal {
     display: none;
@@ -96,7 +170,13 @@
     .team-cards { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; max-width: 350px; opacity: 0; transform: translateX(20px); transition: opacity 0.5s ease, transform 0.5s ease; }
     .team-cards.visible { opacity: 1; transform: translateX(0); }
     .team-cards.fade-out { opacity: 0; transform: translateX(20px); }
-    .team-card { border: 2px dashed #888; border-radius: 12px; padding: 10px 15px; background-color: var(--card-bg); }
+    .team-card {
+      border: 2px dashed #888;
+      border-radius: 12px;
+      padding: 10px 15px;
+      background-color: var(--card-bg);
+      cursor: pointer; /* Add this line to change the cursor to a pointer when hovering */
+    }
     .team-info { display: flex; flex-direction: column; }
     .team-number { font-weight: bold; font-size: 1.1em; color: #c3c3c3; }
     .team-name { font-size: 0.95em; font-weight: bold; color: #c3c3c3; }
@@ -111,7 +191,7 @@
   </header>
   <div class="box-container">
     <p>
-      <strong style="font-size: 1.5em; text-align: center; display: block;">Select An Alliance To View More Info</strong>
+      <strong style="font-size: 1.5em; text-align: center; display: block; color:white">Select An Alliance To View More Info</strong>
       <!-- Existing explanation content -->
     </p>
     <div id="results"></div>
@@ -148,7 +228,7 @@
     async function showTeamStats(teamKey) {
   const teamNumber = teamKey.replace('frc', '');  // Extract the team number
 
-  // Request with auth key in headers
+  // Request team info
   const url = `https://www.thebluealliance.com/api/v3/team/${teamKey}`;
   const teamRes = await fetch(url, {
     headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
@@ -162,13 +242,23 @@
 
   const teamData = await teamRes.json();
   const teamName = teamData.nickname || "Unknown Name";
+  const teamCity = teamData.city || "N/A";
+  const teamCountry = teamData.country || "N/A";
+  const rookieYear = teamData.rookie_year || "N/A";
+
+  // Get the team's match performance
+  const matchStats = await getTeamMatchStats(teamKey);
+
   const teamStats = `
     <h3>Team Key: ${teamKey}</h3>
     <ul>
-      <li><strong>Location:</strong> ${teamData.city || "N/A"}</li>
-      <li><strong>Region:</strong> ${teamData.country || "N/A"}</li>
-      <li><strong>Rookie Year:</strong> ${teamData.rookie_year || "N/A"}</li>
-      <!-- Add more statistics as needed -->
+      <li><strong>Location:</strong> ${teamCity}</li>
+      <li><strong>Region:</strong> ${teamCountry}</li>
+      <li><strong>Rookie Year:</strong> ${rookieYear}</li>
+    </ul>
+    <h4>Recent Performance:</h4>
+    <ul>
+      ${matchStats}
     </ul>
   `;
 
@@ -181,6 +271,75 @@
   modal.classList.remove('hide'); // Ensure fade-out animation is removed
   modal.classList.add('show');
 }
+
+function getEventKeyFromMatchId() {
+  const matchId = getParameterByName('matchId')
+  // Split the matchId at the underscore and return the first part
+  return matchId.split('_')[0];
+}
+
+// Function to get and format match data for the team during a specific event
+async function getTeamMatchStats(teamKey, matchData) {
+  const eventKey = getEventKeyFromMatchId(); // Extract event key from match data
+  const nowUnix = Math.floor(Date.now() / 1000); // Current time in Unix format
+  const matchStats = [];
+
+  try {
+    // Fetch the team's past matches during the event
+    const teamMatchesRes = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/event/${eventKey}/matches/simple`, {
+      method: 'GET',
+      headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
+    });
+
+    if (!teamMatchesRes.ok) throw new Error("Failed to load team match data.");
+
+    const matches = await teamMatchesRes.json();
+    const pastMatches = matches.filter(m => m.actual_time && m.actual_time < nowUnix); // Filter for past matches
+    const sortedMatches = pastMatches.sort((a, b) => b.actual_time - a.actual_time).slice(0, 5); // Get the 5 most recent matches
+
+    // Format the match data
+    sortedMatches.forEach(match => {
+      const teamAlliance = match.alliances.red.team_keys.includes(teamKey) ? 'red' : 'blue';
+      const score = match.alliances[teamAlliance].score;
+      const opponent = teamAlliance === 'red' ? match.alliances.blue.team_keys : match.alliances.red.team_keys;
+      
+      // Extract match type and number
+      const matchType = match.comp_level; // E.g., "qm" for qualification match
+      const matchNumber = match.match_number;
+
+      // Remove "frc" from the team numbers
+      const opponentTeams = opponent.map(team => team.replace('frc', ''));
+
+      matchStats.push(`
+        <div class="match-stats">
+          <h4>Match ${matchType.toUpperCase()} ${matchNumber}</h4>
+          <p><strong>Event:</strong> ${match.event_key}</p>
+          <div class="match-details">
+            <div class="team red-team">
+              <strong>Red Alliance:</strong><br>
+              ${match.alliances.red.team_keys.map(team => team.replace('frc', '')).join(', ')}<br>
+              <strong>Score:</strong> ${match.alliances.red.score}
+            </div>
+            <div class="team blue-team">
+              <strong>Blue Alliance:</strong><br>
+              ${match.alliances.blue.team_keys.map(team => team.replace('frc', '')).join(', ')}<br>
+              <strong>Score:</strong> ${match.alliances.blue.score}
+            </div>
+          </div>
+          <div class="opponent-info">
+            <strong>Opponent(s):</strong> ${opponentTeams.join(', ')}
+          </div>
+        </div>
+      `);
+    });
+
+    // If no matches were found, return a placeholder message
+    return `<div class="match-stats-container">${matchStats.length ? matchStats.join('') : "<div>No recent matches found for this event.</div>"}</div>`;
+  } catch (err) {
+    return `<div class="error-message">Error loading match data: ${err.message}</div>`;
+  }
+}
+
 
 function closeModal() {
   const modal = document.getElementById('team-info-modal');
