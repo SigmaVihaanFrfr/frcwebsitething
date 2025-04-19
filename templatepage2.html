@@ -108,6 +108,10 @@
   </div>
 </main>
 
+
+<div class="match-box">
+    <div id="results"></div>
+</div>
 <script>
   const params = new URLSearchParams(window.location.search);
   const matchId = params.get("match_id");
@@ -166,8 +170,8 @@
       `;
 
       document.getElementById("betting-section").innerHTML = `
-        <div><h3>Bet on Red Alliance Score</h3><button data-bet="red" onclick="placeBet('red', 'over')">Over 125</button><button data-bet="red" onclick="placeBet('red', 'under')">Under 125</button></div>
-        <div><h3>Bet on Blue Alliance Score</h3><button data-bet="blue" onclick="placeBet('blue', 'over')">Over 125</button><button data-bet="blue" onclick="placeBet('blue', 'under')">Under 125</button></div>
+        <div><h3>Bet on Red Alliance Score</h3><button data-bet="red" onclick="placeBet('red', 'over')">Over <div id="redOverPredictionDiv">125</div></button><button data-bet="red" onclick="placeBet('red', 'under')">Under <div id="redUnderPredictionDiv">125</div></button></div>
+        <div><h3>Bet on Blue Alliance Score</h3><button data-bet="blue" onclick="placeBet('blue', 'over')">Over <div id="blueOverPredictionDiv">125</div></button><button data-bet="blue" onclick="placeBet('blue', 'under')">Under <div id="blueUnderPredictionDiv">125</div></button></div>
         <div><h3>Bet on Winning Alliance</h3><button data-bet="winner" onclick="placeBet('winner', 'red')">Red</button><button data-bet="winner" onclick="placeBet('winner', 'blue')">Blue</button></div>
         <div><h3>Bet on Total Match Score</h3><button data-bet="total" onclick="placeBet('total', 'over')">Over 250</button><button data-bet="total" onclick="placeBet('total', 'under')">Under 250</button></div>
         <div><h3>Bet on Margin of Victory</h3><button data-bet="margin" onclick="placeBet('margin', 'high')">Margin > 30</button><button data-bet="margin" onclick="placeBet('margin', 'low')">Margin ≤ 30</button></div>
@@ -271,12 +275,12 @@
           message = `You picked ${choice} to win. Actual: ${matchResult.winningAlliance}`;
           break;
         case "red":
-          outcome = choice === (matchResult.redScore > 125 ? "over" : "under");
-          message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} 125?`;
+          outcome = choice === (matchResult.redScore > rawAvgRed ? "over" : "under");
+          message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} <div id="redEvaluate1PredictionDiv">125</div>?`;
           break;
         case "blue":
-          outcome = choice === (matchResult.blueScore > 125 ? "over" : "under");
-          message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} 125?`;
+          outcome = choice === (matchResult.blueScore > rawAvgBlue ? "over" : "under");
+          message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} <div id="blueEvaluate1PredictionDiv">125</div>?`;
           break;
         case "total":
           const total = matchResult.redScore + matchResult.blueScore;
@@ -382,7 +386,227 @@ function updatePayoutDisplay() {
 }
 
   loadBetsDashboard();
+
+
+  const TBA_AUTH_KEY = '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN'; // Replace with your TBA key
+
+  async function predictScores() {
+  const matchKey = params.get("match_id");
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML = "Loading...";
+  const nowUnix = Math.floor(Date.now() / 1000);
+
+  try {
+    const matchRes = await fetch(`https://www.thebluealliance.com/api/v3/match/${matchKey}`, {
+      headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
+    });
+    if (!matchRes.ok) throw new Error("Invalid match key or match not found.");
+    const matchData = await matchRes.json();
+
+    const eventKey = matchData.event_key;
+    const year = matchKey.substring(0, 4);
+    const alliances = matchData.alliances;
+
+    let redScores = [];
+    let blueScores = [];
+
+    for (const color of ['red', 'blue']) {
+      for (const teamKey of alliances[color].team_keys) {
+        let scores = [];
+
+        // Try from this event first
+        const eventMatchesRes = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/event/${eventKey}/matches/simple`, {
+          headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
+        });
+
+        if (eventMatchesRes.ok) {
+          const matches = await eventMatchesRes.json();
+          const past = matches.filter(m => m.actual_time && m.actual_time < nowUnix);
+          const sorted = past.sort((a, b) => b.actual_time - a.actual_time).slice(0, 3);
+
+          for (const match of sorted) {
+            const teamAlliance = match.alliances.red.team_keys.includes(teamKey) ? 'red' : 'blue';
+            scores.push(match.alliances[teamAlliance].score);
+          }
+        }
+
+        // Fallback to full season
+        if (scores.length < 3) {
+          const seasonMatchesRes = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/matches/${year}/simple`, {
+            headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
+          });
+
+          if (seasonMatchesRes.ok) {
+            const matches = await seasonMatchesRes.json();
+            const past = matches.filter(m => m.actual_time && m.actual_time < nowUnix);
+            const sorted = past.sort((a, b) => b.actual_time - a.actual_time);
+
+            for (const match of sorted) {
+              if (scores.length >= 3) break;
+              const teamAlliance = match.alliances.red.team_keys.includes(teamKey) ? 'red' : 'blue';
+              scores.push(match.alliances[teamAlliance].score);
+            }
+          }
+        }
+
+        if (color === 'red') redScores.push(...scores);
+        else blueScores.push(...scores);
+      }
+    }
+
+    const rawAvgRed = redScores.length ? redScores.reduce((a, b) => a + b) / redScores.length : null;
+    const rawAvgBlue = blueScores.length ? blueScores.reduce((a, b) => a + b) / blueScores.length : null;
+
+    const avgRed = rawAvgRed !== null ? rawAvgRed.toFixed(1) : "N/A";
+    const avgBlue = rawAvgBlue !== null ? rawAvgBlue.toFixed(1) : "N/A";
+
+    resultsDiv.innerHTML = `
+      <div class="score-box red">
+        <h2>Red Alliance Prediction:</h2>
+        <strong>Avg Score:</strong> ${avgRed}
+      </div>
+      <div class="score-box blue">
+        <h2>Blue Alliance Prediction:</h2>
+        <strong>Avg Score:</strong> ${avgBlue}
+      </div>
+    `;
+
+    // Return both formatted and raw values
+    return {
+      avgRed,        // formatted string (e.g., "123.4")
+      avgBlue,
+      rawAvgRed,     // raw number (e.g., 123.38)
+      rawAvgBlue
+    };
+
+  } catch (err) {
+    resultsDiv.innerHTML = `Error: ${err.message}`;
+    return {
+      avgRed: "N/A",
+      avgBlue: "N/A",
+      rawAvgRed: null,
+      rawAvgBlue: null
+    };
+  }
+}
+
+
+async function updateBlueOverAllianceScore() {
+  const predictions = await predictScores(); // Get the predicted scores
+
+  // Round the Blue Alliance avg score to the nearest 5
+  const roundedAvgBlue = Math.round(predictions.avgBlue / 5) * 5 - 10;
+
+  // Get the div where you want to update the Blue Alliance score
+  const predictionDiv = document.getElementById('blueOverPredictionDiv');
+
+  // Replace the content of the div with the rounded Blue Alliance avg score
+  predictionDiv.innerHTML = `${roundedAvgBlue}`;
+}
+
+async function updateRedOverAllianceScore() {
+  const predictions = await predictScores(); // Get the predicted scores
+
+  // Round the Blue Alliance avg score to the nearest 5
+  const roundedAvgRed = Math.round(predictions.avgRed / 5) * 5 - 10;
+
+  // Get the div where you want to update the Blue Alliance score
+  const predictionDiv = document.getElementById('redOverPredictionDiv');
+
+  // Replace the content of the div with the rounded Blue Alliance avg score
+  predictionDiv.innerHTML = `${roundedAvgRed}`;
+}
+
+async function updateBlueUnderAllianceScore() {
+  const predictions = await predictScores(); // Get the predicted scores
+
+  // Round the Blue Alliance avg score to the nearest 5
+  const roundedAvgBlue = Math.round(predictions.avgBlue / 5) * 5 - 10;
+
+  // Get the div where you want to update the Blue Alliance score
+  const predictionDiv = document.getElementById('blueUnderPredictionDiv');
+
+  // Replace the content of the div with the rounded Blue Alliance avg score
+  predictionDiv.innerHTML = `${roundedAvgBlue}`;
+}
+
+async function updateRedUnderAllianceScore() {
+  const predictions = await predictScores(); // Get the predicted scores
+
+  // Round the Blue Alliance avg score to the nearest 5
+  const roundedAvgRed = Math.round(predictions.avgRed / 5) * 5 - 10;
+
+  // Get the div where you want to update the Blue Alliance score
+  const predictionDiv = document.getElementById('redUnderPredictionDiv');
+
+  // Replace the content of the div with the rounded Blue Alliance avg score
+  predictionDiv.innerHTML = `${roundedAvgRed}`;
+}
+
+async function updateBlueEvaluate1AllianceScore() {
+  const predictions = await predictScores(); // Get the predicted scores
+
+  // Round the Blue Alliance avg score to the nearest 5
+  const roundedAvgBlue = Math.round(predictions.avgBlue / 5) * 5 - 10;
+
+  // Get the div where you want to update the Blue Alliance score
+  const predictionDiv = document.getElementById('blueEvaluate1PredictionDiv');
+
+  // Replace the content of the div with the rounded Blue Alliance avg score
+  predictionDiv.innerHTML = `${roundedAvgBlue}`;
+}
+
+async function updateRedEvaluate1AllianceScore() {
+  const predictions = await predictScores(); // Get the predicted scores
+
+  // Round the Blue Alliance avg score to the nearest 5
+  const roundedAvgRed = Math.round(predictions.avgRed / 5) * 5 - 10;
+
+  // Get the div where you want to update the Blue Alliance score
+  const predictionDiv = document.getElementById('redEvaluate1PredictionDiv');
+
+  // Replace the content of the div with the rounded Blue Alliance avg score
+  predictionDiv.innerHTML = `${roundedAvgRed}`;
+}
+
+async function updateBlueEvaluate2AllianceScore() {
+  const predictions = await predictScores(); // Get the predicted scores
+
+  // Round the Blue Alliance avg score to the nearest 5
+  const roundedAvgBlue = Math.round(predictions.avgBlue / 5) * 5 - 10;
+
+  // Get the div where you want to update the Blue Alliance score
+  const predictionDiv = document.getElementById('blueEvaluate2PredictionDiv');
+
+  // Replace the content of the div with the rounded Blue Alliance avg score
+  predictionDiv.innerHTML = `${roundedAvgBlue}`;
+}
+
+async function updateRedEvaluate2AllianceScore() {
+  const predictions = await predictScores(); // Get the predicted scores
+
+  // Round the Blue Alliance avg score to the nearest 5
+  const roundedAvgRed = Math.round(predictions.avgRed / 5) * 5 - 10;
+
+  // Get the div where you want to update the Blue Alliance score
+  const predictionDiv = document.getElementById('redEvaluate2PredictionDiv');
+
+  // Replace the content of the div with the rounded Blue Alliance avg score
+  predictionDiv.innerHTML = `${roundedAvgRed}`;
+}
+
+updateBlueOverAllianceScore();
+updateRedOverAllianceScore();
+updateBlueUnderAllianceScore();
+updateRedUnderAllianceScore();
+updateBlueEvaluate1AllianceScore();
+updateRedEvaluate1AllianceScore();
+updateBlueEvaluate2AllianceScore();
+updateRedEvaluate2AllianceScore();
 </script>
+
+<!-- <div id="blueOverPredictionDiv">125</div>
+<div id="redOverPredictionDiv">125</div> -->
 
 </body>
 </html>
