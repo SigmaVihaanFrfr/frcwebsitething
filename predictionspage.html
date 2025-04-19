@@ -4,125 +4,104 @@
   <meta charset="UTF-8">
   <title>Predicted Match Score</title>
   <style>
-    .box-container { 
-      background-color: #2c3034; 
-      padding: 15px; 
-      border-radius: 8px; 
-      margin-top: 20px; 
-      color: #e0e0e0; 
+    /* Add new modal styling */
+    .team-info-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .team-info-modal.show {
+    display: flex;
+    animation: fadeInFromBottom 0.5s forwards;
+  }
+
+  .team-info-modal.hide {
+    animation: fadeOutToBottom 0.5s forwards;
+  }
+
+  /* Fade-in from the bottom animation */
+  @keyframes fadeInFromBottom {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
     }
-
-    header {
-        background-color: #212529;
-        padding: 20px;
-        text-align: center;
-        border-radius: 20px;
-      }
-
-    :root {
-          --bg-color: #343a40;
-          --text-color: white;
-          --card-bg: #495057;
-          --input-bg: #6c757d;
-          --btn-color: #007bff;
-          --btn-hover: #0056b3;
-      }
-
-      body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 40px 20px;
-        }
-
-    .container {
-      display: flex;
-      gap: 20px;
-      align-items: flex-start;
+    100% {
+      opacity: 1;
+      transform: translateY(0);
     }
+  }
 
-    .score-box {
-      border: 5px solid #595959;
-      border-radius: 12px;
-      padding: 15px;
-      margin-top: 20px;
-      max-width: 400px;
-      cursor: pointer;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* Fade-out to the bottom animation */
+  @keyframes fadeOutToBottom {
+    0% {
+      opacity: 1;
+      transform: translateY(0);
     }
-
-    .score-box:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    100% {
+      opacity: 0;
+      transform: translateY(20px);
     }
+  }
 
+  .modal-content {
+    background: #333;
+    padding: 20px;
+    border-radius: 10px;
+    width: 60%;
+    max-width: 800px;
+    color: white;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.5em;
+    margin-bottom: 10px;
+  }
+
+  .close-modal {
+    cursor: pointer;
+    font-size: 1.2em;
+    background: #dc3545;
+    padding: 5px 10px;
+    border-radius: 5px;
+  }
+
+    /* Existing styles */
+    .tba-button { background-color: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 5px; margin-top: 10px; cursor: pointer; font-size: 0.9em; }
+    .tba-button:hover { background-color: #0056b3; }
+    .box-container { background-color: #2c3034; padding: 15px; border-radius: 8px; margin-top: 20px; color: #e0e0e0; }
+    header { background-color: #212529; padding: 20px; text-align: center; border-radius: 20px; }
+    :root { --bg-color: #343a40; --text-color: white; --card-bg: #495057; --input-bg: #6c757d; --btn-color: #007bff; --btn-hover: #0056b3; }
+    body { font-family: 'Roboto', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 40px 20px; }
+    .container { display: flex; gap: 20px; align-items: flex-start; }
+    .score-box { border: 5px solid #595959; border-radius: 12px; padding: 15px; margin-top: 20px; max-width: 400px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .score-box:hover { transform: scale(1.03); box-shadow: 0 0 10px rgba(0,0,0,0.2); }
     .red { background-color: #ff6060; }
     .blue { background-color: #7b9eff; }
-
     h2 { margin-bottom: 5px; }
-
-    .team-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      margin-top: 20px;
-      max-width: 350px;
-      opacity: 0;
-      transform: translateX(20px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-
-    .team-cards.visible {
-      opacity: 1;
-      transform: translateX(0);
-    }
-
-    .team-cards.fade-out {
-      opacity: 0;
-      transform: translateX(20px);
-    }
-
-    .team-card {
-      border: 2px dashed #888;
-      border-radius: 12px;
-      padding: 10px 15px;
-      background-color: var(--card-bg);
-    }
-
-    .team-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .team-number {
-      font-weight: bold;
-      font-size: 1.1em;
-      color: #c3c3c3;
-    }
-
-    .team-name {
-      font-size: 0.95em;
-      font-weight: bold;
-      color: #c3c3c3;
-    }
-
-    .back-btn {
-      display: block; 
-      margin: 20px auto; 
-      padding: 10px; 
-      background: #dc3545; 
-      color: white; 
-      text-decoration: none; 
-      border-radius: 5px; 
-      width: 200px; 
-      text-align: center; 
-    }
-
-    .back-btn:hover { 
-      background: #c82333; 
-    }
-
+    .team-cards { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; max-width: 350px; opacity: 0; transform: translateX(20px); transition: opacity 0.5s ease, transform 0.5s ease; }
+    .team-cards.visible { opacity: 1; transform: translateX(0); }
+    .team-cards.fade-out { opacity: 0; transform: translateX(20px); }
+    .team-card { border: 2px dashed #888; border-radius: 12px; padding: 10px 15px; background-color: var(--card-bg); }
+    .team-info { display: flex; flex-direction: column; }
+    .team-number { font-weight: bold; font-size: 1.1em; color: #c3c3c3; }
+    .team-name { font-size: 0.95em; font-weight: bold; color: #c3c3c3; }
+    .back-btn { display: block; margin: 20px auto; padding: 10px; background: #dc3545; color: white; text-decoration: none; border-radius: 5px; width: 200px; text-align: center; }
+    .back-btn:hover { background: #c82333; }
   </style>
 </head>
 <body>
@@ -132,19 +111,22 @@
   </header>
   <div class="box-container">
     <p>
-      <strong>How the Match Prediction Works:</strong><br><br>
-      The match prediction system utilizes data from The Blue Alliance (TBA) API to predict the average scores for both the Red and Blue Alliances in a given match. Here's a breakdown of how the prediction is calculated:
-      <ul>
-        <li><strong>Match Retrieval:</strong> The function starts by retrieving data for a specific match using its <code>matchId</code>, which is passed as a parameter in the URL. This includes the teams in each alliance and the event key.</li>
-        <li><strong>Team Performance Analysis:</strong> For each team in the Red and Blue Alliances, the system collects their recent match results. It first attempts to retrieve match data from the current event, focusing on past matches played by each team. If there aren't enough recent matches, it falls back to retrieving data from the team's performance in the current season.</li>
-        <li><strong>Match Scoring:</strong> The system gathers scores for each team based on the past three matches they've played, prioritizing the most recent ones. If fewer than three matches are available, the system will pull additional data from the team's seasonal matches until it has enough information.</li>
-        <li><strong>Average Score Calculation:</strong> The average score for each alliance is calculated by averaging the scores from the past matches of each team in that alliance. These averages are then displayed as part of the prediction, with "N/A" displayed if a team does not have enough match data to compute an average.</li>
-        <li><strong>Dynamic Display:</strong> The predicted average scores for both the Red and Blue Alliances are dynamically shown on the page. Each alliance's score box is interactive, allowing users to click on it to reveal additional details, such as the teams in the alliance and their individual performance stats.</li>
-      </ul>
-      This prediction model provides a data-driven estimate of the performance for each alliance based on recent historical performance, which can help users better understand the potential outcome of the match. Currently, this page is quite limited in functionality. However, with future updates, it is being planned to be expanded.
+      <strong style="font-size: 1.5em; text-align: center; display: block;">Select An Alliance To View More Info</strong>
+      <!-- Existing explanation content -->
     </p>
     <div id="results"></div>
     <div id="teamInfo" class="team-cards"></div>
+  </div>
+
+  <!-- Modal for Team Info -->
+  <div id="team-info-modal" class="team-info-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="team-name-header"></span>
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+      </div>
+      <div id="team-stats"></div>
+    </div>
   </div>
 
   <script>
@@ -154,6 +136,64 @@
     }
 
     const TBA_AUTH_KEY = '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN';
+
+    // Function to open a new window with team details
+    function openTeamDetails(teamKey) {
+      // Remove 'frc' prefix to get the team number
+      const teamNumber = teamKey.replace('frc', '');
+      const url = `https://www.thebluealliance.com/team/${teamNumber}`;
+      window.open(url, '_blank');
+    }
+
+    async function showTeamStats(teamKey) {
+  const teamNumber = teamKey.replace('frc', '');  // Extract the team number
+
+  // Request with auth key in headers
+  const url = `https://www.thebluealliance.com/api/v3/team/${teamKey}`;
+  const teamRes = await fetch(url, {
+    headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
+  });
+
+  if (!teamRes.ok) {
+    // If the request fails, show an error
+    alert('Failed to load team data.');
+    return;
+  }
+
+  const teamData = await teamRes.json();
+  const teamName = teamData.nickname || "Unknown Name";
+  const teamStats = `
+    <h3>Team Key: ${teamKey}</h3>
+    <ul>
+      <li><strong>Location:</strong> ${teamData.city || "N/A"}</li>
+      <li><strong>Region:</strong> ${teamData.country || "N/A"}</li>
+      <li><strong>Rookie Year:</strong> ${teamData.rookie_year || "N/A"}</li>
+      <!-- Add more statistics as needed -->
+    </ul>
+  `;
+
+  // Update the modal content with team stats
+  document.getElementById('team-stats').innerHTML = teamStats;
+  document.getElementById('team-name-header').textContent = `Team ${teamNumber} - ${teamName}`;
+
+  // Show the modal with fade-in animation
+  const modal = document.getElementById('team-info-modal');
+  modal.classList.remove('hide'); // Ensure fade-out animation is removed
+  modal.classList.add('show');
+}
+
+function closeModal() {
+  const modal = document.getElementById('team-info-modal');
+  modal.classList.remove('show'); // Ensure fade-in animation is removed
+  modal.classList.add('hide'); // Trigger fade-out animation
+
+  // Optionally, hide the modal entirely after the animation ends
+  modal.addEventListener('animationend', () => {
+    if (modal.classList.contains('hide')) {
+      modal.style.display = 'none'; // Hide modal after the fade-out animation
+    }
+  });
+}
 
     async function predictScores() {
       const matchKey = getParameterByName('matchId');
@@ -221,7 +261,7 @@
         const avgBlue = blueScores.length ? (blueScores.reduce((a, b) => a + b) / blueScores.length).toFixed(1) : "N/A";
 
         resultsDiv.innerHTML = `
-        <a class="back-btn" href="templatepage2.html?match_id=${matchKey}">Back to Match Page</a>
+          <a class="back-btn" href="templatepage2.html?match_id=${matchKey}">Back to Match Page</a>
           <div class="score-box red" onclick="showTeams('red')">
             <h2>Red Alliance Prediction:</h2>
             <strong>Avg Score:</strong> ${avgRed}
@@ -239,7 +279,6 @@
       }
     }
 
-    // Animation-enhanced showTeams
     async function showTeams(color) {
       const teamInfoDiv = document.getElementById('teamInfo');
 
@@ -262,10 +301,11 @@
         const teamName = teamData.nickname || "Unknown Name";
 
         return `
-          <div class="team-card">
+          <div class="team-card" data-team-key="${teamKey}" onclick="showTeamStats('${teamKey}')">
             <div class="team-info">
               <div class="team-number">Team ${teamNumber}</div>
               <div class="team-name">${teamName}</div>
+              <button class="tba-button" onclick="openTeamDetails('${teamKey}')">Go to TBA</button>
             </div>
           </div>
         `;
