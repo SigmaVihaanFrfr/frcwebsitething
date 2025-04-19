@@ -59,6 +59,8 @@
     .lock-btn { background: #007bff; } .lock-btn:hover { background: #0056b3; }
     .back-btn { display: block; margin: 20px auto; padding: 10px; background: #dc3545; color: white; text-decoration: none; border-radius: 5px; width: 200px; text-align: center; }
     .back-btn:hover { background: #c82333; }
+    .predict-btn { display: block; margin: 20px auto; padding: 10px; background: #2b87f7; color: white; text-decoration: none; border-radius: 5px; width: 200px; text-align: center; }
+    .predict-btn:hover { background: #236dc8; }
     .red-alliance { background-color: #ff4d4d; padding: 10px; border-radius: 5px; margin: 10px 0; }
     .blue-alliance { background-color: #4d79ff; padding: 10px; border-radius: 5px; margin: 10px 0; }
     .bet-amount { font-size: 18px; font-weight: 500; margin-top: 10px; }
@@ -390,10 +392,9 @@ function updatePayoutDisplay() {
 
   const TBA_AUTH_KEY = '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN'; // Replace with your TBA key
 
-  async function predictScores() {
+async function predictScores() {
   const matchKey = params.get("match_id");
   const resultsDiv = document.getElementById('results');
-  resultsDiv.innerHTML = "Loading...";
   const nowUnix = Math.floor(Date.now() / 1000);
 
   try {
@@ -469,6 +470,7 @@ function updatePayoutDisplay() {
         <h2>Blue Alliance Prediction:</h2>
         <strong>Avg Score:</strong> ${avgBlue}
       </div>
+      <a class="predict-btn" href="predictionspage.html?matchId=${matchKey}">View More Prediction Info</a>
     `;
 
     // Return both formatted and raw values
@@ -480,7 +482,6 @@ function updatePayoutDisplay() {
     };
 
   } catch (err) {
-    resultsDiv.innerHTML = `Error: ${err.message}`;
     return {
       avgRed: "N/A",
       avgBlue: "N/A",

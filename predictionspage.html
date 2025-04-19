@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Predicted Match Score</title>
+  <style>
+    .box-container { 
+      background-color: #2c3034; 
+      padding: 15px; 
+      border-radius: 8px; 
+      margin-top: 20px; 
+      color: #e0e0e0; 
+    }
+
+    header {
+        background-color: #212529;
+        padding: 20px;
+        text-align: center;
+        border-radius: 20px;
+      }
+
+    :root {
+          --bg-color: #343a40;
+          --text-color: white;
+          --card-bg: #495057;
+          --input-bg: #6c757d;
+          --btn-color: #007bff;
+          --btn-hover: #0056b3;
+      }
+
+      body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .score-box {
+      border: 5px solid #595959;
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 20px;
+      max-width: 400px;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .score-box:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    .red { background-color: #ff6060; }
+    .blue { background-color: #7b9eff; }
+
+    h2 { margin-bottom: 5px; }
+
+    .team-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-top: 20px;
+      max-width: 350px;
+      opacity: 0;
+      transform: translateX(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .team-cards.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .team-cards.fade-out {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+
+    .team-card {
+      border: 2px dashed #888;
+      border-radius: 12px;
+      padding: 10px 15px;
+      background-color: var(--card-bg);
+    }
+
+    .team-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .team-number {
+      font-weight: bold;
+      font-size: 1.1em;
+      color: #c3c3c3;
+    }
+
+    .team-name {
+      font-size: 0.95em;
+      font-weight: bold;
+      color: #c3c3c3;
+    }
+
+    .back-btn {
+      display: block; 
+      margin: 20px auto; 
+      padding: 10px; 
+      background: #dc3545; 
+      color: white; 
+      text-decoration: none; 
+      border-radius: 5px; 
+      width: 200px; 
+      text-align: center; 
+    }
+
+    .back-btn:hover { 
+      background: #c82333; 
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Predicted Score for Match</h1>
+    <a class="back-btn" href="homepage.html">Back to Main Page</a>
+  </header>
+  <div class="box-container">
+    <p>
+      <strong>How the Match Prediction Works:</strong><br><br>
+      The match prediction system utilizes data from The Blue Alliance (TBA) API to predict the average scores for both the Red and Blue Alliances in a given match. Here's a breakdown of how the prediction is calculated:
+      <ul>
+        <li><strong>Match Retrieval:</strong> The function starts by retrieving data for a specific match using its <code>matchId</code>, which is passed as a parameter in the URL. This includes the teams in each alliance and the event key.</li>
+        <li><strong>Team Performance Analysis:</strong> For each team in the Red and Blue Alliances, the system collects their recent match results. It first attempts to retrieve match data from the current event, focusing on past matches played by each team. If there aren't enough recent matches, it falls back to retrieving data from the team's performance in the current season.</li>
+        <li><strong>Match Scoring:</strong> The system gathers scores for each team based on the past three matches they've played, prioritizing the most recent ones. If fewer than three matches are available, the system will pull additional data from the team's seasonal matches until it has enough information.</li>
+        <li><strong>Average Score Calculation:</strong> The average score for each alliance is calculated by averaging the scores from the past matches of each team in that alliance. These averages are then displayed as part of the prediction, with "N/A" displayed if a team does not have enough match data to compute an average.</li>
+        <li><strong>Dynamic Display:</strong> The predicted average scores for both the Red and Blue Alliances are dynamically shown on the page. Each alliance's score box is interactive, allowing users to click on it to reveal additional details, such as the teams in the alliance and their individual performance stats.</li>
+      </ul>
+      This prediction model provides a data-driven estimate of the performance for each alliance based on recent historical performance, which can help users better understand the potential outcome of the match. Currently, this page is quite limited in functionality. However, with future updates, it is being planned to be expanded.
+    </p>
+    <div id="results"></div>
+    <div id="teamInfo" class="team-cards"></div>
+  </div>
+
+  <script>
+    function getParameterByName(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    const TBA_AUTH_KEY = '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN';
+
+    async function predictScores() {
+      const matchKey = getParameterByName('matchId');
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = "Loading...";
+      const nowUnix = Math.floor(Date.now() / 1000);
+
+      try {
+        const matchRes = await fetch(`https://www.thebluealliance.com/api/v3/match/${matchKey}`, {
+          headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
+        });
+        if (!matchRes.ok) throw new Error("Invalid match key or match not found.");
+        const matchData = await matchRes.json();
+
+        const eventKey = matchData.event_key;
+        const year = matchKey.substring(0, 4);
+        const alliances = matchData.alliances;
+
+        let redScores = [];
+        let blueScores = [];
+
+        for (const color of ['red', 'blue']) {
+          for (const teamKey of alliances[color].team_keys) {
+            let scores = [];
+
+            const eventMatchesRes = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/event/${eventKey}/matches/simple`, {
+              headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
+            });
+
+            if (eventMatchesRes.ok) {
+              const matches = await eventMatchesRes.json();
+              const past = matches.filter(m => m.actual_time && m.actual_time < nowUnix);
+              const sorted = past.sort((a, b) => b.actual_time - a.actual_time).slice(0, 3);
+
+              for (const match of sorted) {
+                const teamAlliance = match.alliances.red.team_keys.includes(teamKey) ? 'red' : 'blue';
+                scores.push(match.alliances[teamAlliance].score);
+              }
+            }
+
+            if (scores.length < 3) {
+              const seasonMatchesRes = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/matches/${year}/simple`, {
+                headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
+              });
+
+              if (seasonMatchesRes.ok) {
+                const matches = await seasonMatchesRes.json();
+                const past = matches.filter(m => m.actual_time && m.actual_time < nowUnix);
+                const sorted = past.sort((a, b) => b.actual_time - a.actual_time);
+
+                for (const match of sorted) {
+                  if (scores.length >= 3) break;
+                  const teamAlliance = match.alliances.red.team_keys.includes(teamKey) ? 'red' : 'blue';
+                  scores.push(match.alliances[teamAlliance].score);
+                }
+              }
+            }
+
+            if (color === 'red') redScores.push(...scores);
+            else blueScores.push(...scores);
+          }
+        }
+
+        const avgRed = redScores.length ? (redScores.reduce((a, b) => a + b) / redScores.length).toFixed(1) : "N/A";
+        const avgBlue = blueScores.length ? (blueScores.reduce((a, b) => a + b) / blueScores.length).toFixed(1) : "N/A";
+
+        resultsDiv.innerHTML = `
+        <a class="back-btn" href="templatepage2.html?match_id=${matchKey}">Back to Match Page</a>
+          <div class="score-box red" onclick="showTeams('red')">
+            <h2>Red Alliance Prediction:</h2>
+            <strong>Avg Score:</strong> ${avgRed}
+          </div>
+          <div class="score-box blue" onclick="showTeams('blue')">
+            <h2>Blue Alliance Prediction:</h2>
+            <strong>Avg Score:</strong> ${avgBlue}
+          </div>
+        `;
+
+        window.allianceTeamKeys = alliances;
+
+      } catch (err) {
+        resultsDiv.innerHTML = `Error: ${err.message}`;
+      }
+    }
+
+    // Animation-enhanced showTeams
+    async function showTeams(color) {
+      const teamInfoDiv = document.getElementById('teamInfo');
+
+      // Animate out
+      if (teamInfoDiv.classList.contains('visible')) {
+        teamInfoDiv.classList.remove('visible');
+        teamInfoDiv.classList.add('fade-out');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      const teams = window.allianceTeamKeys[color].team_keys;
+
+      const teamCards = await Promise.all(teams.map(async (teamKey) => {
+        const teamNumber = teamKey.replace('frc', '');
+
+        const teamRes = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}`, {
+          headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
+        });
+        const teamData = await teamRes.json();
+        const teamName = teamData.nickname || "Unknown Name";
+
+        return `
+          <div class="team-card">
+            <div class="team-info">
+              <div class="team-number">Team ${teamNumber}</div>
+              <div class="team-name">${teamName}</div>
+            </div>
+          </div>
+        `;
+      }));
+
+      teamInfoDiv.innerHTML = teamCards.join('');
+      teamInfoDiv.classList.remove('fade-out');
+      teamInfoDiv.classList.add('visible');
+    }
+
+    predictScores();
+  </script>
+</body>
+</html>
