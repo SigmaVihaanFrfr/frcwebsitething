@@ -72,48 +72,64 @@
 </head>
 <body>
 
-<header>
-  <h1 id="match-title">Match Details</h1>
-  <div id="token-display">Tokens: <span id="token-count">1000</span></div>
-</header>
+  <header>
+    <h1 id="match-title">Match Details</h1>
+    <div id="token-display">Tokens: <span id="token-count">1000</span></div>
+  </header>
+  
+  <main>
+    <div class="match-box">
+      <a id="back-to-main" class="back-btn" href="homepage.html">Back to Main Page</a>
+  
+      <!-- New Event Page Button -->
+      <a id="back-to-event" class="back-btn" href="#">Back to Event Page</a>
 
-<main>
-  <div class="match-box">
-    <a id="back-to-main" class="back-btn" href="homepage.html">Back to Main Page</a>
+      <script>
+          // Get match_id from the URL query parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const matchCode = urlParams.get('match_id');  // Get the full match_id
 
-    <div id="match-info"><p>Loading match details...</p></div>
-
-    <div class="bet-container" id="bet-container">
-      <h2>Set Your Bet Amount</h2>
-      <div class="bet-amount">
-        <button onclick="changeBetAmount(-50)">-50</button>
-        <input type="text" id="bet-amount-input" value="0">
-        <button onclick="changeBetAmount(50)">+50</button>
-        <div id="payout-display" style="margin-top: 10px; font-size: 16px; color: #ffc107;">Total Possible Payout: 0 tokens</div>
-      </div>      
-
-      <h2>Place Your Bets</h2>
-      <div id="betting-section"></div>
-      <button class="reset-btn" id="reset-btn" onclick="resetBets()" disabled>Reset Bets</button>
-      <button class="lock-btn" id="lock-btn" onclick="lockBets()" disabled>Lock Bets</button>
-      <button class="lock-btn" id="claim-btn" onclick="claimWinnings()" style="display: none;">Claim Winnings</button>
-      <div id="results-box" style="margin-top: 20px;"></div>
+        if (matchCode) {
+          // Extract the eventId by splitting matchId at the first underscore
+          const eventId = matchCode.split('_')[0];  // Get the part before the first underscore
+          document.getElementById('back-to-event').href = `templatepage.html?event_code=${eventId}`;
+        } else {
+          console.error("No match_id found in URL.");
+        }
+      </script>
+  
+      <div id="match-info"><p>Loading match details...</p></div>
+  
+      <div class="bet-container" id="bet-container">
+        <h2>Set Your Bet Amount</h2>
+        <div class="bet-amount">
+          <button onclick="changeBetAmount(-50)">-50</button>
+          <input type="text" id="bet-amount-input" value="0">
+          <button onclick="changeBetAmount(50)">+50</button>
+          <div id="payout-display" style="margin-top: 10px; font-size: 16px; color: #ffc107;">Total Possible Payout: 0 tokens</div>
+        </div>
+  
+        <h2>Place Your Bets</h2>
+        <div id="betting-section"></div>
+        <button class="reset-btn" id="reset-btn" onclick="resetBets()" disabled>Reset Bets</button>
+        <button class="lock-btn" id="lock-btn" onclick="lockBets()" disabled>Lock Bets</button>
+        <button class="lock-btn" id="claim-btn" onclick="claimWinnings()" style="display: none;">Claim Winnings</button>
+        <div id="results-box" style="margin-top: 20px;"></div>
+      </div>
+  
+      <div class="video-container" id="video-container"><h2>Match Video</h2><p>Loading video...</p></div>
     </div>
-
-    <div class="video-container" id="video-container"><h2>Match Video</h2><p>Loading video...</p></div>
-  </div>
-
-  <!-- 👇 My Bets Dashboard -->
+  
+    <!-- 👇 My Bets Dashboard -->
+    <div class="match-box">
+      <h2>My Bets Dashboard</h2>
+      <div id="bets-dashboard"></div>
+    </div>
+  </main>
+  
   <div class="match-box">
-    <h2>My Bets Dashboard</h2>
-    <div id="bets-dashboard"></div>
-  </div>
-</main>
-
-
-<div class="match-box">
     <div id="results"></div>
-</div>
+  </div>  
 <script>
   const params = new URLSearchParams(window.location.search);
   const matchId = params.get("match_id");
@@ -173,7 +189,7 @@
         <div><h3>Bet on Red Alliance Score</h3><button data-bet="red" onclick="placeBet('red', 'over')">Over <div id="redOverPredictionDiv">125</div></button><button data-bet="red" onclick="placeBet('red', 'under')">Under <div id="redUnderPredictionDiv">125</div></button></div>
         <div><h3>Bet on Blue Alliance Score</h3><button data-bet="blue" onclick="placeBet('blue', 'over')">Over <div id="blueOverPredictionDiv">125</div></button><button data-bet="blue" onclick="placeBet('blue', 'under')">Under <div id="blueUnderPredictionDiv">125</div></button></div>
         <div><h3>Bet on Winning Alliance</h3><button data-bet="winner" onclick="placeBet('winner', 'red')">Red</button><button data-bet="winner" onclick="placeBet('winner', 'blue')">Blue</button></div>
-        <div><h3>Bet on Total Match Score</h3><button data-bet="total" onclick="placeBet('total', 'over')">Over <div id="totalPredictionDiv">250</div></button><button data-bet="total" onclick="placeBet('total', 'under')">Under <div id="totalPredictionDiv">250</div></button></div>
+        <div><h3>Bet on Total Match Score</h3><button data-bet="total" onclick="placeBet('total', 'over')">Over <div id="totalPredictionDiv">250</div></button><button data-bet="total" onclick="placeBet('total', 'under')">Under <div id="totalPredictionDiv2">250</div></button></div>
         <div><h3>Bet on Margin of Victory</h3><button data-bet="margin" onclick="placeBet('margin', 'high')">Margin > 30</button><button data-bet="margin" onclick="placeBet('margin', 'low')">Margin ≤ 30</button></div>
         <div><h3>Bet on Red Alliance Fouls</h3><button data-bet="redFouls" onclick="placeBet('redFouls', 'over')">Over 10</button><button data-bet="redFouls" onclick="placeBet('redFouls', 'under')">Under 10</button></div>
         <div><h3>Bet on Blue Alliance Fouls</h3><button data-bet="blueFouls" onclick="placeBet('blueFouls', 'over')">Over 10</button><button data-bet="blueFouls" onclick="placeBet('blueFouls', 'under')">Under 10</button></div>
@@ -583,11 +599,25 @@ async function updateTotalScore() {
   totalPredictionDiv.innerHTML = `${roundedTotalAvg}`;
 }
 
+async function updateTotalScore2() {
+  const predictions = await predictScores(); // Get the predicted scores
+
+  // Round the Blue Alliance avg score to the nearest 5
+  const roundedTotalAvg = ((Math.round(predictions.avgRed / 5) * 5 - 10) + (Math.round(predictions.avgBlue / 5) * 5 - 10));
+
+  // Get the div where you want to update the Blue Alliance score
+  const totalPredictionDiv = document.getElementById('totalPredictionDiv2');
+
+  // Replace the content of the div with the rounded Blue Alliance avg score
+  totalPredictionDiv.innerHTML = `${roundedTotalAvg}`;
+}
+
 updateBlueOverAllianceScore();
 updateRedOverAllianceScore();
 updateBlueUnderAllianceScore();
 updateRedUnderAllianceScore();
 updateTotalScore();
+updateTotalScore2();
 </script>
 
 <!-- <div id="blueOverPredictionDiv">125</div>
