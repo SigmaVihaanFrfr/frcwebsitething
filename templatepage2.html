@@ -235,7 +235,15 @@
   }
 
   function claimWinnings() {
-  if (!lockedBetData || lockedBetData.processed) return;
+    if (!lockedBetData) {
+      alert("No locked bet data found for this match.");
+      return;
+    }
+
+    if (lockedBetData.processed) {
+      alert("You’ve already claimed your winnings for this match.");
+      return;
+    }
 
   // Check if the match has been played before allowing claims
   if (!matchResult.played) {
@@ -277,12 +285,12 @@ function evaluateBets() {
           message = `You picked ${choice} to win. Actual: ${matchResult.winningAlliance}`;
           break;
         case "red":
-          outcome = choice === (matchResult.redScore > 125 ? "over" : "under");
-          message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} 125`;
+          outcome = choice === (matchResult.redScore > rawAvgRed ? "over" : "under");
+          message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} ${rawAvgRed}`;
           break;
         case "blue":
-          outcome = choice === (matchResult.blueScore > 125 ? "over" : "under");
-          message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} 125`;
+          outcome = choice === (matchResult.blueScore > rawAvgBlue ? "over" : "under");
+          message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} ${rawAvgBlue}`;
           break;
         case "total":
           const total = matchResult.redScore + matchResult.blueScore;
