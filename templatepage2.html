@@ -146,9 +146,7 @@
   if (!matchId) {
     document.getElementById("match-title").textContent = "No match ID provided.";
   } else {
-    fetch(`https://www.thebluealliance.com/api/v3/match/${matchId}`, {
-      headers: { 'X-TBA-Auth-Key': '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN' }
-    })
+    fetch(`https://www.thebluealliance.com/api/v3/match/${matchId}?X-TBA-Auth-Key=4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN`)
     .then(response => response.json())
     .then(match => {
       const redScore = match.alliances.red.score;
@@ -236,42 +234,51 @@
 
   function claimWinnings() {
     if (!lockedBetData) {
-      alert("No locked bet data found for this match.");
-      return;
+        alert("No locked bet data found for this match.");
+        return;
     }
 
     if (lockedBetData.processed) {
-      alert("You’ve already claimed your winnings for this match.");
-      return;
+        alert("You’ve already claimed your winnings for this match.");
+        return;
     }
 
-  // Check if the match has been played before allowing claims
-  if (!matchResult.played) {
-    alert("The match hasn't been played yet. You can claim winnings after the match is complete.");
-    return;
-  }
+    // Check if the match has been played before allowing claims
+    if (!matchResult.played) {
+        alert("The match hasn't been played yet. You can claim winnings after the match is complete.");
+        return;
+    }
 
-  betsPlaced = lockedBetData.bets;
-  betAmount = lockedBetData.amount;
-  const results = evaluateBets();
-  document.getElementById("results-box").innerHTML = results.summary;
+    // Log to check the values
+    console.log("Locked Bet Data: ", lockedBetData);
+    console.log("Match Result: ", matchResult);
+    
+    betsPlaced = lockedBetData.bets;
+    betAmount = lockedBetData.amount;
+    const results = evaluateBets();
+    
+    // Log the results
+    console.log("Bet Results: ", results);
 
-  if (results.correctCount > 0) {
-    const winnings = betAmount * 2 * results.correctCount;
-    tokenAmount += winnings;
-    alert(`You won ${results.correctCount} bet(s)! You earned ${winnings} tokens.`);
-  } else {
-    alert("You lost all your bets. Better luck next time.");
-  }
+    document.getElementById("results-box").innerHTML = results.summary;
 
-  updateTokenDisplay();
-  lockedBetData.processed = true;
-  localStorage.setItem(`locked_bet_${matchId}`, JSON.stringify(lockedBetData));
-  document.getElementById("claim-btn").style.display = "none";
+    if (results.correctCount > 0) {
+        const winnings = betAmount * 2 * results.correctCount;
+        tokenAmount += winnings;
+        alert(`You won ${results.correctCount} bet(s)! You earned ${winnings} tokens.`);
+    } else {
+        alert("You lost all your bets. Better luck next time.");
+    }
+
+    updateTokenDisplay();
+    lockedBetData.processed = true;
+    localStorage.setItem(`locked_bet_${matchId}`, JSON.stringify(lockedBetData));
+    document.getElementById("claim-btn").style.display = "none";
 }
 
 
 function evaluateBets() {
+  predictScores();
     let correctCount = 0;
     let summary = `<h3>Bet Results:</h3><ul style="text-align:left; display:inline-block;">`;
 
@@ -285,12 +292,12 @@ function evaluateBets() {
           message = `You picked ${choice} to win. Actual: ${matchResult.winningAlliance}`;
           break;
         case "red":
-          outcome = choice === (matchResult.redScore > rawAvgRed ? "over" : "under");
-          message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} ${rawAvgRed}`;
+          outcome = choice === (matchResult.redScore > predictScores().avgRed ? "over" : "under");
+          message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} ${predictScores().avgRed}`;
           break;
         case "blue":
-          outcome = choice === (matchResult.blueScore > rawAvgBlue ? "over" : "under");
-          message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} ${rawAvgBlue}`;
+          outcome = choice === (matchResult.blueScore > predictScores().avgBlue ? "over" : "under");
+          message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} ${predictScores().avgBlue}`;
           break;
         case "total":
           const total = matchResult.redScore + matchResult.blueScore;
@@ -406,9 +413,7 @@ async function predictScores() {
   const nowUnix = Math.floor(Date.now() / 1000);
 
   try {
-    const matchRes = await fetch(`https://www.thebluealliance.com/api/v3/match/${matchKey}`, {
-      headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
-    });
+    const matchRes = await fetch(`https://www.thebluealliance.com/api/v3/match/${matchKey}?X-TBA-Auth-Key=4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN`);
     if (!matchRes.ok) throw new Error("Invalid match key or match not found.");
     const matchData = await matchRes.json();
 
@@ -424,9 +429,7 @@ async function predictScores() {
         let scores = [];
 
         // Try from this event first
-        const eventMatchesRes = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/event/${eventKey}/matches/simple`, {
-          headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
-        });
+        const eventMatchesRes = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/event/${eventKey}/matches/simple?X-TBA-Auth-Key=4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN`);
 
         if (eventMatchesRes.ok) {
           const matches = await eventMatchesRes.json();
@@ -441,9 +444,7 @@ async function predictScores() {
 
         // Fallback to full season
         if (scores.length < 3) {
-          const seasonMatchesRes = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/matches/${year}/simple`, {
-            headers: { 'X-TBA-Auth-Key': TBA_AUTH_KEY }
-          });
+          const seasonMatchesRes = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/matches/${year}/simple?X-TBA-Auth-Key=4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN`);
 
           if (seasonMatchesRes.ok) {
             const matches = await seasonMatchesRes.json();
@@ -552,66 +553,10 @@ async function updateRedUnderAllianceScore() {
   predictionDiv.innerHTML = `${roundedAvgRed}`;
 }
 
-async function updateBlueEvaluate1AllianceScore() {
-  const predictions = await predictScores(); // Get the predicted scores
-
-  // Round the Blue Alliance avg score to the nearest 5
-  const roundedAvgBlue = Math.round(predictions.avgBlue / 5) * 5 - 10;
-
-  // Get the div where you want to update the Blue Alliance score
-  const predictionDiv = document.getElementById('blueEvaluate1PredictionDiv');
-
-  // Replace the content of the div with the rounded Blue Alliance avg score
-  predictionDiv.innerHTML = `${roundedAvgBlue}`;
-}
-
-async function updateRedEvaluate1AllianceScore() {
-  const predictions = await predictScores(); // Get the predicted scores
-
-  // Round the Blue Alliance avg score to the nearest 5
-  const roundedAvgRed = Math.round(predictions.avgRed / 5) * 5 - 10;
-
-  // Get the div where you want to update the Blue Alliance score
-  const predictionDiv = document.getElementById('redEvaluate1PredictionDiv');
-
-  // Replace the content of the div with the rounded Blue Alliance avg score
-  predictionDiv.innerHTML = `${roundedAvgRed}`;
-}
-
-async function updateBlueEvaluate2AllianceScore() {
-  const predictions = await predictScores(); // Get the predicted scores
-
-  // Round the Blue Alliance avg score to the nearest 5
-  const roundedAvgBlue = Math.round(predictions.avgBlue / 5) * 5 - 10;
-
-  // Get the div where you want to update the Blue Alliance score
-  const predictionDiv = document.getElementById('blueEvaluate2PredictionDiv');
-
-  // Replace the content of the div with the rounded Blue Alliance avg score
-  predictionDiv.innerHTML = `${roundedAvgBlue}`;
-}
-
-async function updateRedEvaluate2AllianceScore() {
-  const predictions = await predictScores(); // Get the predicted scores
-
-  // Round the Blue Alliance avg score to the nearest 5
-  const roundedAvgRed = Math.round(predictions.avgRed / 5) * 5 - 10;
-
-  // Get the div where you want to update the Blue Alliance score
-  const predictionDiv = document.getElementById('redEvaluate2PredictionDiv');
-
-  // Replace the content of the div with the rounded Blue Alliance avg score
-  predictionDiv.innerHTML = `${roundedAvgRed}`;
-}
-
 updateBlueOverAllianceScore();
 updateRedOverAllianceScore();
 updateBlueUnderAllianceScore();
 updateRedUnderAllianceScore();
-updateBlueEvaluate1AllianceScore();
-updateRedEvaluate1AllianceScore();
-updateBlueEvaluate2AllianceScore();
-updateRedEvaluate2AllianceScore();
 </script>
 
 <!-- <div id="blueOverPredictionDiv">125</div>
