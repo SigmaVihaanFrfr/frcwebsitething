@@ -278,11 +278,11 @@ function evaluateBets() {
           break;
         case "red":
           outcome = choice === (matchResult.redScore > 125 ? "over" : "under");
-          message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} ${rawAvgRed}`;
+          message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} 125`;
           break;
         case "blue":
           outcome = choice === (matchResult.blueScore > 125 ? "over" : "under");
-          message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} ${rawAvgBlue}`;
+          message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} 125`;
           break;
         case "total":
           const total = matchResult.redScore + matchResult.blueScore;
