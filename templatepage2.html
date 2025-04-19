@@ -277,11 +277,11 @@ function evaluateBets() {
           message = `You picked ${choice} to win. Actual: ${matchResult.winningAlliance}`;
           break;
         case "red":
-          outcome = choice === (matchResult.redScore > rawAvgRed ? "over" : "under");
+          outcome = choice === (matchResult.redScore > 125 ? "over" : "under");
           message = `Red = ${matchResult.redScore} → ${choice.toUpperCase()} ${rawAvgRed}`;
           break;
         case "blue":
-          outcome = choice === (matchResult.blueScore > rawAvgBlue ? "over" : "under");
+          outcome = choice === (matchResult.blueScore > 125 ? "over" : "under");
           message = `Blue = ${matchResult.blueScore} → ${choice.toUpperCase()} ${rawAvgBlue}`;
           break;
         case "total":
