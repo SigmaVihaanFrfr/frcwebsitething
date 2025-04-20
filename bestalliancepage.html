@@ -154,6 +154,7 @@
 
     <header>
         <h1>Alliance Builder</h1>
+        <strong>Gain Tokens By Getting A Power Ranking Of Over 95</strong>
     </header>
 
     <div class="box-container" id="teams">
@@ -410,117 +411,144 @@ function draftNextTeam() {
         }
 
         function renderSimulateButton() {
-            const simulateBtn = document.createElement('button');
-            simulateBtn.textContent = "Simulate Match";
-            simulateBtn.style.cssText = `
-                display: block;
-                margin: 30px auto;
-                background: #28a745;
-                color: white;
-                padding: 12px 24px;
-                font-size: 16px;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-            `;
-            simulateBtn.addEventListener('click', async () => {
-                if (!selectedAlliance || selectedAlliance.length !== 3 || !window.opposingAlliance || window.opposingAlliance.length !== 3) {
-                    alert("Both alliances must be complete before simulation.");
-                    return;
-                }
-
-                document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-
-                const modal = document.getElementById("matchModal") || createMatchModal();
-                const modalContent = document.getElementById("modalContent");
-                modalContent.innerHTML = '<h2 style="margin-bottom: 20px; text-align: center;">Predicted Alliance Scores</h2>';
-
-                const allTeams = [...selectedAlliance, ...window.opposingAlliance];
-
-                const teamScores = await Promise.all(allTeams.map(async team => {
-                    const match = await getLastMatch(team.teamKey);
-                    if (!match) return null;
-
-                    const alliance = match.alliances.red.team_keys.includes(team.teamKey) ? 'red' : 'blue';
-                    const score = match.alliances[alliance].score;
-
-                    return {
-                        team: team,
-                        score
-                    };
-                }));
-
-                const redTeamData = teamScores.slice(0, 3).filter(t => t && t.score != null);
-                const blueTeamData = teamScores.slice(3, 6).filter(t => t && t.score != null);
-
-                const redScores = redTeamData.map(t => t.score);
-                const blueScores = blueTeamData.map(t => t.score);
-
-                const avgRed = redScores.length ? (redScores.reduce((a, b) => a + b, 0) / redScores.length).toFixed(1) : 'N/A';
-                const avgBlue = blueScores.length ? (blueScores.reduce((a, b) => a + b, 0) / blueScores.length).toFixed(1) : 'N/A';
-
-                const redChance = avgRed !== 'N/A' && avgBlue !== 'N/A' ? (parseFloat(avgRed) / (parseFloat(avgRed) + parseFloat(avgBlue)) * 100).toFixed(1) : 'N/A';
-                const blueChance = avgRed !== 'N/A' && avgBlue !== 'N/A' ? (parseFloat(avgBlue) / (parseFloat(avgRed) + parseFloat(avgBlue)) * 100).toFixed(1) : 'N/A';
-
-                // Power score calculation (scale of 1 to 100, divided by 300)
-                let powerScore = 'N/A';
-                let progressBarColor = 'gray';
-                let tooltipText = '';
-                let mvpText = '';
-
-                if (avgRed !== 'N/A' && redChance !== 'N/A' && blueChance !== 'N/A') {
-                    let baseScore = (parseFloat(avgRed) / 300) * 100;
-                    tooltipText += `Base Score: ${(baseScore).toFixed(1)} (from average score / 300)\n`;
-
-                    if (parseFloat(redChance) > parseFloat(blueChance)) {
-                        baseScore += 5;
-                        tooltipText += `+5 bonus: Higher win probability\n`;
-                    }
-
-                    if (redScores.every(score => score > 80)) {
-                        baseScore += 3;
-                        tooltipText += `+3 bonus: All team scores > 80\n`;
-                    }
-
-                    if (redScores.some(score => score > 120)) {
-                        baseScore += 2;
-                        tooltipText += `+2 bonus: At least one team scored > 120\n`;
-                    }
-
-                    powerScore = Math.min(100, baseScore).toFixed(1);
-
-                    const scoreVal = parseFloat(powerScore);
-                    if (scoreVal >= 70) progressBarColor = '#28a745';
-                    else if (scoreVal >= 40) progressBarColor = '#ffc107';
-                    else progressBarColor = '#dc3545';
-
-                    // MVP
-                    const mvp = redTeamData.reduce((max, t) => t.score > max.score ? t : max, redTeamData[0]);
-                    if (mvp) {
-                        const name = mvp.team.nickname || `Team ${mvp.team.team_number}`;
-                        mvpText = `<p style="margin-top: 10px;"><strong>🏅 Team MVP:</strong> ${name} (${mvp.team.team_number}) with ${mvp.score} pts</p>`;
-                    }
-                }
-
-                modalContent.innerHTML += `
-                    <div style="text-align: center;">
-                        <p><strong>Your Alliance Average Score:</strong> ${avgRed}</p>
-                        <p><strong>Opposing Alliance Average Score:</strong> ${avgBlue}</p>
-                        <p><strong>Your Alliance Win Probability:</strong> ${redChance}%</p>
-                        <p><strong>Opposing Alliance Win Probability:</strong> ${blueChance}%</p>
-                        <p style="font-size: 18px; margin-top: 15px;"><strong>Your Alliance Power Score:</strong> ${powerScore}/100</p>
-                        <div title="${tooltipText.trim().replace(/\n/g, '&#10;')}" style="margin: 10px auto; width: 80%; height: 25px; background: #eee; border-radius: 15px; overflow: hidden; cursor: help;">
-                            <div style="width: ${powerScore}%; height: 100%; background: ${progressBarColor}; transition: width 0.5s;"></div>
-                        </div>
-                        ${mvpText}
-                    </div>
-                `;
-
-                modal.style.display = 'flex';
-            });
-
-            document.getElementById('teams').appendChild(simulateBtn);
+    const simulateBtn = document.createElement('button');
+    simulateBtn.textContent = "Simulate Match";
+    simulateBtn.style.cssText = `
+        display: block;
+        margin: 30px auto;
+        background: #28a745;
+        color: white;
+        padding: 12px 24px;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    `;
+    simulateBtn.addEventListener('click', async () => {
+        if (!selectedAlliance || selectedAlliance.length !== 3 || !window.opposingAlliance || window.opposingAlliance.length !== 3) {
+            alert("Both alliances must be complete before simulation.");
+            return;
         }
+
+        document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+
+        const modal = document.getElementById("matchModal") || createMatchModal();
+        const modalContent = document.getElementById("modalContent");
+        modalContent.innerHTML = '<h2 style="margin-bottom: 20px; text-align: center;">Predicted Alliance Scores</h2>';
+
+        const allTeams = [...selectedAlliance, ...window.opposingAlliance];
+
+        const teamScores = await Promise.all(allTeams.map(async team => {
+            const match = await getLastMatch(team.teamKey);
+            if (!match) return null;
+
+            const alliance = match.alliances.red.team_keys.includes(team.teamKey) ? 'red' : 'blue';
+            const score = match.alliances[alliance].score;
+
+            return {
+                team: team,
+                score
+            };
+        }));
+
+        const redTeamData = teamScores.slice(0, 3).filter(t => t && t.score != null);
+        const blueTeamData = teamScores.slice(3, 6).filter(t => t && t.score != null);
+
+        const redScores = redTeamData.map(t => t.score);
+        const blueScores = blueTeamData.map(t => t.score);
+
+        const avgRed = redScores.length ? (redScores.reduce((a, b) => a + b, 0) / redScores.length).toFixed(1) : 'N/A';
+        const avgBlue = blueScores.length ? (blueScores.reduce((a, b) => a + b, 0) / blueScores.length).toFixed(1) : 'N/A';
+
+        const redChance = avgRed !== 'N/A' && avgBlue !== 'N/A' ? (parseFloat(avgRed) / (parseFloat(avgRed) + parseFloat(avgBlue)) * 100).toFixed(1) : 'N/A';
+        const blueChance = avgRed !== 'N/A' && avgBlue !== 'N/A' ? (parseFloat(avgBlue) / (parseFloat(avgRed) + parseFloat(avgBlue)) * 100).toFixed(1) : 'N/A';
+
+        // Power score calculation (scale of 1 to 100, divided by 300)
+        let powerScore = 'N/A';
+        let progressBarColor = 'gray';
+        let tooltipText = '';
+        let mvpText = '';
+
+        if (avgRed !== 'N/A' && redChance !== 'N/A' && blueChance !== 'N/A') {
+            let baseScore = (parseFloat(avgRed) / 300) * 100;
+            tooltipText += `Base Score: ${(baseScore).toFixed(1)} (from average score / 300)\n`;
+
+            if (parseFloat(redChance) > parseFloat(blueChance)) {
+                baseScore += 5;
+                tooltipText += `+5 bonus: Higher win probability\n`;
+            }
+
+            if (redScores.every(score => score > 80)) {
+                baseScore += 3;
+                tooltipText += `+3 bonus: All team scores > 80\n`;
+            }
+
+            if (redScores.some(score => score > 120)) {
+                baseScore += 2;
+                tooltipText += `+2 bonus: At least one team scored > 120\n`;
+            }
+
+            powerScore = Math.min(100, baseScore).toFixed(1);
+
+            const scoreVal = parseFloat(powerScore);
+            if (scoreVal >= 70) progressBarColor = '#28a745';
+            else if (scoreVal >= 40) progressBarColor = '#ffc107';
+            else progressBarColor = '#dc3545';
+
+            // MVP
+            const mvp = redTeamData.reduce((max, t) => t.score > max.score ? t : max, redTeamData[0]);
+            if (mvp) {
+                const name = mvp.team.nickname || `Team ${mvp.team.team_number}`;
+                mvpText = `<p style="margin-top: 10px;"><strong>🏅 Team MVP:</strong> ${name} (${mvp.team.team_number}) with ${mvp.score} pts</p>`;
+            }
+        }
+
+        // Add tokens for every point above 94
+        allTeams.forEach(team => {
+            const match = teamScores.find(t => t.team.teamKey === team.teamKey);
+            if (powerScore > 95) {
+                const additionalTokens = (powerScore - 95) * 10;
+                // Add tokens to the user's balance (replace with your token update function)
+                updateTokens(additionalTokens);
+            }
+        });
+
+        modalContent.innerHTML += `
+            <div style="text-align: center;">
+                <p><strong>Your Alliance Average Score:</strong> ${avgRed}</p>
+                <p><strong>Opposing Alliance Average Score:</strong> ${avgBlue}</p>
+                <p><strong>Your Alliance Win Probability:</strong> ${redChance}%</p>
+                <p><strong>Opposing Alliance Win Probability:</strong> ${blueChance}%</p>
+                <p style="font-size: 18px; margin-top: 15px;"><strong>Your Alliance Power Score:</strong> ${powerScore}/100</p>
+                <div title="${tooltipText.trim().replace(/\n/g, '&#10;')}" style="margin: 10px auto; width: 80%; height: 25px; background: #eee; border-radius: 15px; overflow: hidden; cursor: help;">
+                    <div style="width: ${powerScore}%; height: 100%; background: ${progressBarColor}; transition: width 0.5s;"></div>
+                </div>
+                ${mvpText}
+                <a href="homepage.html" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 8px; font-size: 16px;">Back to Homepage</a>
+            </div>
+        `;
+
+        modal.style.display = 'flex';
+    });
+
+    document.getElementById('teams').appendChild(simulateBtn);
+}
+
+
+function updateUserTokens(amount) {
+    const currentTokens = parseInt(localStorage.getItem('tokens')) || 0;
+    const newTokens = currentTokens + amount;
+
+    // Update the token count in localStorage
+    localStorage.setItem('tokens', newTokens);
+
+    // Optionally update the UI with the new token count
+    const tokenDisplay = document.getElementById('tokenDisplay');
+    if (tokenDisplay) {
+        tokenDisplay.textContent = `Tokens: ${newTokens}`;
+    }
+}
+
 
 // Helper to create modal dynamically if it doesn't exist
 function createMatchModal() {
