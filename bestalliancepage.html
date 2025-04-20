@@ -292,15 +292,45 @@
         const top100 = allSortedTeams.slice(0, 100);
 
         const teamDetailMap = {};
-        const topTeamDetails = await Promise.all(top100.map(async ([teamKey]) => {
-            const res = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}`, {
-                headers: { 'X-TBA-Auth-Key': apiKey }
-            });
-            const data = await res.json();
-            const rankData = rankings.find(r => r.team_key === teamKey);
-            teamDetailMap[teamKey] = { ...data, rank: rankData ? rankData.rank : 'N/A' };
-            return { ...data, teamKey, rank: rankData ? rankData.rank : 'N/A' };
-        }));
+const topTeamDetails = await Promise.all(top100.map(async ([teamKey]) => {
+    const teamRes = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}`, {
+        headers: { 'X-TBA-Auth-Key': apiKey }
+    });
+    const teamData = await teamRes.json();
+    const rankData = rankings.find(r => r.team_key === teamKey);
+
+    // Fetch last 5 matches
+    const matchRes = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/matches/2025/simple`, {
+        headers: { 'X-TBA-Auth-Key': apiKey }
+    });
+    const matches = await matchRes.json();
+    const nowUnix = Math.floor(Date.now() / 1000);
+    const pastMatches = matches.filter(m => m.actual_time && m.actual_time < nowUnix);
+    const last5 = pastMatches.sort((a, b) => b.actual_time - a.actual_time).slice(0, 5);
+
+    let totalScore = 0;
+    last5.forEach(match => {
+        const allianceColor = match.alliances.red.team_keys.includes(teamKey) ? 'red' : 'blue';
+        totalScore += match.alliances[allianceColor].score || 0;
+    });
+
+    const avgScore = last5.length ? totalScore / last5.length : 0;
+
+    const combinedData = {
+        ...teamData,
+        teamKey,
+        rank: rankData ? rankData.rank : 'N/A',
+        avgScore
+    };
+    teamDetailMap[teamKey] = combinedData;
+    return combinedData;
+}));
+
+// Now sort by average score from last 5 matches
+const finalSortedTeams = topTeamDetails.sort((a, b) => b.avgScore - a.avgScore);
+
+window.allTopTeams = finalSortedTeams;
+draftNextTeam();
 
         window.allTopTeams = topTeamDetails;
         draftNextTeam();
@@ -328,11 +358,14 @@ function draftNextTeam() {
     }
 
     currentDraftOptions.forEach((team, index) => {
+        const rankingIndex = window.allTopTeams.findIndex(t => t.teamKey === team.teamKey) + 1;
+
         const teamCard = document.createElement('div');
         teamCard.className = 'team-card';
         teamCard.innerHTML = `
             <strong>${team.nickname || `Team ${team.team_number}`}</strong> (Team ${team.team_number})
-            <p><strong>Rank:</strong> ${team.rank}</p> <!-- Display team rank here -->
+            <p><strong>Avg Score:</strong> ${team.avgScore.toFixed(1)}</p>
+            <p><strong>Rank:</strong> #${rankingIndex}</p>
             <button class="select-team-btn" data-index="${index}">Select Team</button>
             <button onclick="showTeamStats('${team.teamKey}')">Show Match Stats</button>
         `;
