@@ -595,8 +595,8 @@ function draftNextTeam() {
             tooltipText += `Base Score: ${(baseScore).toFixed(1)} (from average score / 300)\n`;
 
             if (parseFloat(redChance) > parseFloat(blueChance)) {
-                baseScore += 2;
-                tooltipText += `+2 bonus: Higher win probability\n`;
+                baseScore += 5;
+                tooltipText += `+5 bonus: Higher win probability\n`;
             }
 
             if (redScores.every(score => score > 80)) {
