@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" sizes="32x32" href="browserlogo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Alliance Leaderboard">
+    <link rel="apple-touch-icon" href="logo.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alliance Leaderboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        header {
+            background-color: #212529;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .tab-buttons button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .tab-buttons button.active {
+            background-color: #0056b3;
+        }
+
+        .competition-box {
+            background-color: #5b5b5b;
+            background-image: repeating-linear-gradient(
+                45deg,
+                #5b5b5b,
+                #5b5b5b 10px,
+                #4e4e4e 10px,
+                #4e4e4e 20px
+            );
+            background-size: 28.28px 28.28px;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            animation: stripeSlide 4s linear infinite;
+        }
+
+        @keyframes stripeSlide {
+            0% { background-position: 0 0; }
+            100% { background-position: -28.28px 28.28px; }
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        pre {
+            background: #f4f4f4;
+            color: black;
+            padding: 1em;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 1rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px;
+            background: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            width: 200px;
+            text-align: center;
+        }
+
+        .back-btn:hover {
+            background: #c82333;
+        }
+
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        ul#leaderboard-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        ul#leaderboard-list li {
+            margin: 10px 0;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            opacity: 0;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        ul#leaderboard-list li:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            transform: scale(1.02);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #sendData {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        #sendData:hover {
+            background-color: #0056b3;
+        }
+
+        .leaderboard-container {
+            background-color: rgba(0, 0, 0, 0.5); /* translucent black box */
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        ul#leaderboard-list li.user-highlight {
+            text-decoration: underline;
+            font-weight: bold;
+            color: #ffc107; /* gold highlight */
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #ffc107;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>FRC Scoreboard</h1>
+</header>
+
+<div class="tab-buttons">
+    <button id="tab-send" class="active">Send Stats</button>
+    <button id="tab-leaderboard">Leaderboard</button>
+</div>
+
+<main>
+    <div class="competition-box">
+        <!-- Send Stats Tab -->
+        <div id="send-tab" class="tab-content active">
+            <div style="margin-bottom: 20px;">
+                <h3>🪙 Best Score: <span id="score-count">0</span></h3>
+            </div>
+            <button id="sendData">Send Your Score Stats</button>
+            <pre id="output">Click the button to send your current score stats.</pre>
+        </div>
+
+        <!-- Leaderboard Tab -->
+        <div id="leaderboard-tab" class="tab-content">
+            <h2>🏆 Leaderboard</h2>
+            <div class="leaderboard-container">
+                <div id="loading-message" style="margin-top: 10px;">
+                    <div class="spinner"></div>
+                    <div>Loading leaderboard...</div>
+                </div>                
+                <ul id="leaderboard-list"></ul>
+            </div>            
+        </div>
+
+        <a href="bestalliancepage.html" class="back-btn">Back to Alliance Page</a>
+    </div>
+</main>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2dmdlB1f-6Jy2KpJshUXEyCfI0g7Ou0mz8NvjmcN0kzUWGk6ib6GMy1nqrMLkQoPk/exec";
+
+    // SCORE SYSTEM
+    function getScore() {
+        return parseInt(localStorage.getItem('score')) || 0;
+    }
+
+    function setScore(value) {
+        localStorage.setItem('score', value);
+        updateScoreDisplay();
+    }
+
+    function updateScoreDisplay() {
+        document.getElementById("score-count").textContent = getScore();
+    }
+
+    if (localStorage.getItem('score') === null) {
+        localStorage.setItem('score', '0');
+    }
+
+    updateScoreDisplay();
+
+    document.getElementById("sendData").addEventListener("click", async () => {
+        const output = document.getElementById("output");
+        const username = localStorage.getItem("username");
+        const score = localStorage.getItem("score");
+
+        if (!username || !score) {
+            output.textContent = "Error: Username or score not found in localStorage.";
+            return;
+        }
+
+        const data = {
+            name: username,
+            score: parseInt(score)
+        };
+
+        output.textContent = "Sending data: " + JSON.stringify(data, null, 2);
+
+        try {
+            await fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            output.textContent += "\n\nRequest sent!";
+        } catch (error) {
+            output.textContent = "Fetch Error:\n" + error;
+        }
+    });
+
+    // Leaderboard Function
+    async function updateLeaderboard() {
+    const leaderboardList = document.getElementById("leaderboard-list");
+    const loadingMessage = document.getElementById("loading-message");
+
+    leaderboardList.innerHTML = "";
+    loadingMessage.style.display = "block"; // Show loading
+
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            mode: "cors"
+        });
+
+        const leaderboard = await response.json();
+        leaderboard.sort((a, b) => b.Score - a.Score);
+
+        const currentUser = localStorage.getItem("username");
+
+        leaderboard.forEach((user, index) => {
+            const listItem = document.createElement("li");
+            listItem.style.animationDelay = `${index * 0.05}s`; // gradual fade-in
+            listItem.innerHTML = `<strong>#${index + 1}</strong> - ${user.Name}: ${user.Score}/100`;
+
+            if (user.Name === currentUser) {
+                listItem.classList.add("user-highlight");
+            }
+
+            leaderboardList.appendChild(listItem);
+        });
+
+        loadingMessage.style.display = "none"; // Hide loading
+    } catch (err) {
+        console.error("Error fetching leaderboard:", err);
+        loadingMessage.textContent = "Failed to load leaderboard.";
+    }
+}
+
+    // Tab System
+    const sendTabBtn = document.getElementById("tab-send");
+    const leaderboardTabBtn = document.getElementById("tab-leaderboard");
+    const sendTab = document.getElementById("send-tab");
+    const leaderboardTab = document.getElementById("leaderboard-tab");
+
+    sendTabBtn.addEventListener("click", () => {
+        sendTabBtn.classList.add("active");
+        leaderboardTabBtn.classList.remove("active");
+        sendTab.classList.add("active");
+        leaderboardTab.classList.remove("active");
+    });
+
+    leaderboardTabBtn.addEventListener("click", () => {
+        leaderboardTabBtn.classList.add("active");
+        sendTabBtn.classList.remove("active");
+        leaderboardTab.classList.add("active");
+        sendTab.classList.remove("active");
+        updateLeaderboard(); // Auto-load leaderboard
+    });
+</script>
+
+</body>
+</html>

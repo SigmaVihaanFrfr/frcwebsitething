@@ -467,34 +467,34 @@
         ];
 
         async function updateLeaderboard() {
-  const url = 'https://script.google.com/macros/s/AKfycbxSKKEEYW2TB1NXuDdKx5bNGstwka4VDOIfNPH5DsxYNa38HKyaTTFeeNPrX2AA5CVOVA/exec';
+            const url = 'https://script.google.com/macros/s/AKfycbxSKKEEYW2TB1NXuDdKx5bNGstwka4VDOIfNPH5DsxYNa38HKyaTTFeeNPrX2AA5CVOVA/exec';
 
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      },
-      mode: "cors"
-    });
+            try {
+                const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                mode: "cors"
+                });
 
-    const leaderboard = await response.json();
+                const leaderboard = await response.json();
 
-    leaderboard.sort((a, b) => b.Tokens - a.Tokens);
+                leaderboard.sort((a, b) => b.Tokens - a.Tokens);
 
-    const leaderboardList = document.getElementById("leaderboard-list");
-    leaderboardList.innerHTML = "";
+                const leaderboardList = document.getElementById("leaderboard-list");
+                leaderboardList.innerHTML = "";
 
-    leaderboard.forEach((user, index) => {
-      const listItem = document.createElement("li");
-      listItem.style.margin = "10px 0";
-      listItem.innerHTML = `<strong>#${index + 1}</strong> - ${user.Name}: ${user.Tokens} tokens`;
-      leaderboardList.appendChild(listItem);
-    });
-  } catch (err) {
-    console.error("Error fetching leaderboard:", err);
-  }
-}
+                leaderboard.forEach((user, index) => {
+                const listItem = document.createElement("li");
+                listItem.style.margin = "10px 0";
+                listItem.innerHTML = `<strong>#${index + 1}</strong> - ${user.Name}: ${user.Tokens} tokens`;
+                leaderboardList.appendChild(listItem);
+                });
+            } catch (err) {
+                console.error("Error fetching leaderboard:", err);
+            }
+            }
 
     const TBA_AUTH_KEY = '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN';
 

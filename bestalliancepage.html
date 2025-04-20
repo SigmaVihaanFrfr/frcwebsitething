@@ -592,6 +592,13 @@ function draftNextTeam() {
         }
 
         // Add tokens for every point above 94
+        // Save power score to localStorage if it's higher than the existing score
+        const storedScore = parseFloat(localStorage.getItem('score')) || 0;
+        if (parseFloat(powerScore) > storedScore) {
+            localStorage.setItem('score', powerScore);
+        }
+
+        // Add tokens for every point above 94
         allTeams.forEach(team => {
             const match = teamScores.find(t => t.team.teamKey === team.teamKey);
             if (powerScore > 90) {
@@ -612,7 +619,7 @@ function draftNextTeam() {
                     <div style="width: ${powerScore}%; height: 100%; background: ${progressBarColor}; transition: width 0.5s;"></div>
                 </div>
                 ${mvpText}
-                <a href="homepage.html" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 8px; font-size: 16px;">Back to Homepage</a>
+                <a href="bestallianceleaderboard.html" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 8px; font-size: 16px;">Submit Your Score</a>
             </div>
         `;
 
