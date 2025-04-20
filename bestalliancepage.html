@@ -609,7 +609,7 @@ function draftNextTeam() {
                 tooltipText += `+2 bonus: At least one team scored > 120\n`;
             }
 
-            powerScore = Math.min(100, baseScore).toFixed(1);
+            powerScore = Math.max(100, baseScore).toFixed(1);
 
             const scoreVal = parseFloat(powerScore);
             if (scoreVal >= 70) progressBarColor = '#28a745';
