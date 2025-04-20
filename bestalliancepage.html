@@ -289,6 +289,17 @@
                     <h2>Your Drafted Alliance:</h2>
                 </div>
                 <div class="box-container" id="drafted-box"></div>
+                <button id="reset-button" style="
+                    display: block;
+                    margin: 20px auto;
+                    background: #ffc107;
+                    color: black;
+                    padding: 0px 20px;
+                    border: none;
+                    border-radius: 15px;
+                    cursor: pointer;
+                    font-weight: bold;
+                ">Reset Alliance</button>
             `;
 
             const draftedBox = document.getElementById('drafted-box');
@@ -304,6 +315,8 @@
 
             generateOpposingAlliance();
             renderSimulateButton();
+
+            document.getElementById('reset-button').addEventListener('click', resetAlliance);
         }
     
         async function showTeamStats(teamKey) {
@@ -350,9 +363,7 @@
             }
         }
     
-        function closeModal() {
-            document.getElementById('team-info-modal').style.display = 'none';
-        }
+
 
         function generateOpposingAlliance() {
             const remainingTeams = window.allTopTeams.filter(team =>
@@ -365,6 +376,9 @@
                 const team = remainingTeams.splice(randIndex, 1)[0];
                 opposingAlliance.push(team);
             }
+
+            // Store it globally so the simulate button can see it
+            window.opposingAlliance = opposingAlliance;
 
             const opposingDiv = document.getElementById('opposing-alliance');
             opposingDiv.innerHTML = `
@@ -383,28 +397,132 @@
             });
         }
 
-        function renderSimulateButton() {
-            const simulateBtn = document.createElement('button');
-            simulateBtn.textContent = "Simulate Match";
-            simulateBtn.style.cssText = `
-                display: block;
-                margin: 30px auto;
-                background: #28a745;
-                color: white;
-                padding: 12px 24px;
-                font-size: 16px;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-            `;
-            simulateBtn.addEventListener('click', () => {
-                alert("Match simulation coming soon!");
-            });
+        function closeModal() {
+            document.getElementById('team-info-modal').style.display = 'none';
+            document.getElementById('matchModal').style.display = 'none'; // Close match simulation modal
+        }
 
-            document.body.appendChild(simulateBtn);
+        function renderSimulateButton() {
+    const simulateBtn = document.createElement('button');
+    simulateBtn.textContent = "Simulate Match";
+    simulateBtn.style.cssText = `
+        display: block;
+        margin: 30px auto;
+        background: #28a745;
+        color: white;
+        padding: 12px 24px;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    `;
+    simulateBtn.addEventListener('click', async () => {
+        if (!selectedAlliance || selectedAlliance.length !== 3 || !window.opposingAlliance || window.opposingAlliance.length !== 3) {
+            alert("Both alliances must be complete before simulation.");
+            return;
+        }
+
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+
+        const modal = document.getElementById("matchModal") || createMatchModal();
+        const modalContent = document.getElementById("modalContent");
+        modalContent.innerHTML = '<h2 style="margin-bottom: 20px; text-align: center;">Predicted Alliance Scores</h2>'; // Clear previous content
+
+        // Fetch last match scores for all teams
+        const allTeams = [...selectedAlliance, ...window.opposingAlliance];
+
+        const teamScores = await Promise.all(allTeams.map(async team => {
+            const match = await getLastMatch(team.teamKey);
+            if (!match) return null;
+
+            const alliance = match.alliances.red.team_keys.includes(team.teamKey) ? 'red' : 'blue';
+            const score = match.alliances[alliance].score;
+
+            return {
+                team: team,
+                score
+            };
+        }));
+
+        // Filter valid scores and divide into alliances
+        const redScores = teamScores.slice(0, 3).map(t => t?.score).filter(score => score != null);
+        const blueScores = teamScores.slice(3, 6).map(t => t?.score).filter(score => score != null);
+
+        const avgRed = redScores.length ? (redScores.reduce((a, b) => a + b, 0) / redScores.length).toFixed(1) : 'N/A';
+        const avgBlue = blueScores.length ? (blueScores.reduce((a, b) => a + b, 0) / blueScores.length).toFixed(1) : 'N/A';
+
+        // Calculate win probabilities based on average scores
+        const redChance = avgRed !== 'N/A' && avgBlue !== 'N/A' ? (parseFloat(avgRed) / (parseFloat(avgRed) + parseFloat(avgBlue)) * 100).toFixed(1) : 'N/A';
+        const blueChance = avgRed !== 'N/A' && avgBlue !== 'N/A' ? (parseFloat(avgBlue) / (parseFloat(avgRed) + parseFloat(avgBlue)) * 100).toFixed(1) : 'N/A';
+
+        modalContent.innerHTML += `
+            <div style="text-align: center;">
+                <p><strong>Your Alliance Average Score:</strong> ${avgRed}</p>
+                <p><strong>Opposing Alliance Average Score:</strong> ${avgBlue}</p>
+                <p><strong>Your Alliance Win Probability:</strong> ${redChance}%</p>
+                <p><strong>Opposing Alliance Win Probability:</strong> ${blueChance}%</p>
+            </div>
+        `;
+
+        modal.style.display = 'flex';
+    });
+
+    document.getElementById('teams').appendChild(simulateBtn);
+}
+
+// Helper to create modal dynamically if it doesn't exist
+function createMatchModal() {
+    const modal = document.createElement('div');
+    modal.id = 'matchModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content" id="modalContent">
+        </div>
+        <a href="javascript:void(0)" class="close-btn" onclick="document.getElementById('matchModal').style.display='none'">Close</a>
+    `;
+    document.body.appendChild(modal);
+    return modal;
+}
+
+
+function resetAlliance() {
+    location.reload();  // Reloads the current page
+}
+
+
+        async function getLastMatch(teamKey) {
+            try {
+                const res = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/matches/2025/simple`, {
+                    headers: { 'X-TBA-Auth-Key': apiKey }
+                });
+
+                const matches = await res.json();
+                const nowUnix = Math.floor(Date.now() / 1000);
+                const pastMatches = matches.filter(m => m.actual_time && m.actual_time < nowUnix);
+
+                if (!pastMatches.length) return null;
+
+                const latestMatch = pastMatches.sort((a, b) => b.actual_time - a.actual_time)[0];
+                return latestMatch;
+
+            } catch (err) {
+                console.error(`Failed to fetch last match for ${teamKey}:`, err);
+                return null;
+            }
         }
     
         loadTopTeams();
     </script>
+
+    <div id="matchModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+    background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:#2c2c2c; padding:30px; border-radius:12px; max-width:800px; width:90%; max-height:80vh; overflow-y:auto; color:#fff; position:relative;">
+    <span id="closeModalBtn" style="position:absolute; top:12px; right:16px; font-size:24px; cursor:pointer;">&times;</span>
+    <div id="modalContent">
+    <!-- Match info will go here -->
+    </div>
+    </div>
+    </div>
+
 </body>
 </html>
