@@ -609,7 +609,7 @@ function draftNextTeam() {
                 tooltipText += `+2 bonus: At least one team scored > 120\n`;
             }
 
-            powerScore = baseScore;
+            powerScore = Math.Round(baseScore);
 
             const scoreVal = parseFloat(powerScore);
             if (scoreVal >= 70) progressBarColor = '#28a745';
