@@ -60,6 +60,29 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
+            color: white;
+
+            opacity: 0;
+            transform: scale(0.95);
+            animation: popFadeIn 0.4s ease forwards;
+        }
+
+        @keyframes popFadeIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .fade-out {
+            animation: fadeOut 0.4s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: scale(0.9);
+            }
         }
 
         .team-card button {
@@ -146,7 +169,55 @@
         }
 
         .match-stats-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
             margin-top: 20px;
+        }
+
+        .match-stats {
+            animation: fadeIn 0.5s ease-in;
+            padding: 1rem;
+            background-color: #353535; /* light gray background */
+            color: #1a1a1a; /* darker text */
+            border: 2px solid #767676;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .match-details {
+            color: white;
+            margin-top: 0.5rem;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .alliance-box {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 8px;
+            font-weight: 500;
+            margin: 0.2rem 0;
+        }
+
+        .red-box {
+            background-color: #ff5a5a;
+            color: #ffe6e6;
+        }
+
+        .blue-box {
+            background-color: #60a2ff;
+            color: #ebf0ff;
+        }
+
+        .selected-team {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -154,7 +225,7 @@
 
     <header>
         <h1>Alliance Builder</h1>
-        <strong>Gain Tokens By Getting A Power Ranking Of Over 95</strong>
+        <strong>Gain Tokens By Getting A Power Ranking Of Over 90</strong>
     </header>
 
     <div class="box-container" id="teams">
@@ -172,6 +243,7 @@
             <div id="team-match-stats"></div>
         </div>
     </div>
+    <a href="homepage.html" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 8px; font-size: 16px;">Back to Homepage</a>
 
     <script>
         const apiKey = '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN';
@@ -334,38 +406,54 @@ function draftNextTeam() {
         }
     
         async function getTeamMatchStats(teamKey) {
-            const nowUnix = Math.floor(Date.now() / 1000);
-            const matchStats = [];
-    
-            try {
-                const res = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/matches/2025/simple`, {
-                    headers: { 'X-TBA-Auth-Key': apiKey }
-                });
-    
-                const matches = await res.json();
-                const pastMatches = matches.filter(m => m.actual_time && m.actual_time < nowUnix);
-                const sortedMatches = pastMatches.sort((a, b) => b.actual_time - a.actual_time).slice(0, 5);
-    
-                sortedMatches.forEach(match => {
-                    const alliance = match.alliances.red.team_keys.includes(teamKey) ? 'red' : 'blue';
-    
-                    matchStats.push(`
-                        <div class="match-stats">
-                            <h4>Match ${match.comp_level.toUpperCase()} ${match.match_number}</h4>
-                            <p><strong>Event:</strong> ${match.event_key}</p>
-                            <div class="match-details">
-                                <div><strong>Red:</strong> ${match.alliances.red.team_keys.map(t => t.replace('frc', '')).join(', ')} (${match.alliances.red.score})</div>
-                                <div><strong>Blue:</strong> ${match.alliances.blue.team_keys.map(t => t.replace('frc', '')).join(', ')} (${match.alliances.blue.score})</div>
-                            </div>
-                        </div>
-                    `);
-                });
-    
-                return `<div class="match-stats-container">${matchStats.length ? matchStats.join('') : "<div>No recent matches found.</div>"}</div>`;
-            } catch (err) {
-                return `<div class="error-message">Error loading match data: ${err.message}</div>`;
-            }
-        }
+    const nowUnix = Math.floor(Date.now() / 1000);
+    const matchStats = [];
+
+    const compLevelMap = {
+        'qm': 'Qualification',
+        'qf': 'Quarterfinals',
+        'sf': 'Semifinals',
+        'f': 'Finals'
+    };
+
+    try {
+        const res = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}/matches/2025/simple`, {
+            headers: { 'X-TBA-Auth-Key': apiKey }
+        });
+
+        const matches = await res.json();
+        const pastMatches = matches.filter(m => m.actual_time && m.actual_time < nowUnix);
+        const sortedMatches = pastMatches.sort((a, b) => b.actual_time - a.actual_time).slice(0, 5);
+
+        sortedMatches.forEach(match => {
+            const formatTeam = (t, color) => {
+                const num = t.replace('frc', '');
+                const isSelected = t === teamKey;
+                return `<span class="alliance-box ${color}-box${isSelected ? ' selected-team' : ''}">${num}</span>`;
+            };
+
+            const redTeams = match.alliances.red.team_keys.map(t => formatTeam(t, 'red')).join(' ');
+            const blueTeams = match.alliances.blue.team_keys.map(t => formatTeam(t, 'blue')).join(' ');
+
+            const compLevel = compLevelMap[match.comp_level] || match.comp_level.toUpperCase();
+
+            matchStats.push(`
+                <div class="match-stats">
+                    <h4 style="color: white;>Match <strong style="color: white;">${compLevel}</strong> ${match.match_number}</h4>
+                    <p style="color: white;><strong style="color: white;>Event:</strong> ${match.event_key}</p>
+                    <div class="match-details">
+                        <div><strong>Red:</strong> ${redTeams} (${match.alliances.red.score})</div>
+                        <div><strong>Blue:</strong> ${blueTeams} (${match.alliances.blue.score})</div>
+                    </div>
+                </div>
+            `);
+        });
+
+        return `<div class="match-stats-container">${matchStats.length ? matchStats.join('') : "<div>No recent matches found.</div>"}</div>`;
+    } catch (err) {
+        return `<div class="error-message">Error loading match data: ${err.message}</div>`;
+    }
+}
     
 
 
@@ -506,8 +594,8 @@ function draftNextTeam() {
         // Add tokens for every point above 94
         allTeams.forEach(team => {
             const match = teamScores.find(t => t.team.teamKey === team.teamKey);
-            if (powerScore > 95) {
-                const additionalTokens = (powerScore - 95) * 10;
+            if (powerScore > 90) {
+                const additionalTokens = (powerScore - 90) * 10;
                 // Add tokens to the user's balance (replace with your token update function)
                 updateTokens(additionalTokens);
             }
