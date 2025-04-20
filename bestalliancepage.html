@@ -153,7 +153,7 @@
 <body>
 
     <header>
-        <h1>Random Top 100 FRC Teams</h1>
+        <h1>Alliance Builder</h1>
     </header>
 
     <div class="box-container" id="teams">
@@ -178,100 +178,103 @@
         let currentDraftOptions = [];
     
         async function loadTopTeams() {
-            const topTeamsList = document.getElementById('teams');
-            topTeamsList.innerHTML = '<div>Loading top teams...</div>';
-    
-            try {
-                const response = await fetch('https://www.thebluealliance.com/api/v3/events/2025/simple', {
-                    headers: { 'X-TBA-Auth-Key': apiKey }
-                });
-    
-                const events = await response.json();
-                if (!events.length) throw new Error('No events found.');
-    
-                const rankings = [];
-                const selectedEvents = events.slice(0, 5);
-    
-                for (const event of selectedEvents) {
-                    const rankingRes = await fetch(`https://www.thebluealliance.com/api/v3/event/${event.key}/rankings`, {
-                        headers: { 'X-TBA-Auth-Key': apiKey }
+    const topTeamsList = document.getElementById('teams');
+    topTeamsList.innerHTML = '<div>Loading top teams...</div>';
+
+    try {
+        const response = await fetch('https://www.thebluealliance.com/api/v3/events/2025/simple', {
+            headers: { 'X-TBA-Auth-Key': apiKey }
+        });
+
+        const events = await response.json();
+        if (!events.length) throw new Error('No events found.');
+
+        const rankings = [];
+        const selectedEvents = events.slice(0, 5);
+
+        for (const event of selectedEvents) {
+            const rankingRes = await fetch(`https://www.thebluealliance.com/api/v3/event/${event.key}/rankings`, {
+                headers: { 'X-TBA-Auth-Key': apiKey }
+            });
+            const rankingData = await rankingRes.json();
+
+            if (rankingData.rankings) {
+                rankingData.rankings.forEach(r => {
+                    rankings.push({
+                        team_key: r.team_key,
+                        rank: r.rank, // Add rank here
+                        qualPoints: r.extra_stats ? r.extra_stats[0] : r.sort_orders?.[0] || 0
                     });
-                    const rankingData = await rankingRes.json();
-    
-                    if (rankingData.rankings) {
-                        rankingData.rankings.forEach(r => {
-                            rankings.push({
-                                team_key: r.team_key,
-                                qualPoints: r.extra_stats ? r.extra_stats[0] : r.sort_orders?.[0] || 0
-                            });
-                        });
-                    }
-                }
-    
-                const teamStats = {};
-                rankings.forEach(({ team_key, qualPoints }) => {
-                    if (!teamStats[team_key]) teamStats[team_key] = 0;
-                    teamStats[team_key] += qualPoints;
                 });
-    
-                const allSortedTeams = Object.entries(teamStats).sort((a, b) => b[1] - a[1]);
-                const top100 = allSortedTeams.slice(0, 100);
-    
-                const teamDetailMap = {};
-                const topTeamDetails = await Promise.all(top100.map(async ([teamKey]) => {
-                    const res = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}`, {
-                        headers: { 'X-TBA-Auth-Key': apiKey }
-                    });
-                    const data = await res.json();
-                    teamDetailMap[teamKey] = data;
-                    return { ...data, teamKey };
-                }));
-    
-                window.allTopTeams = topTeamDetails;
-                draftNextTeam();
-    
-            } catch (error) {
-                console.error('Error loading top teams:', error);
-                topTeamsList.innerHTML = '<div>Error loading teams. Please try again later.</div>';
             }
         }
-    
-        function draftNextTeam() {
-            const topTeamsList = document.getElementById('teams');
-            topTeamsList.innerHTML = '';
-    
-            const pool = [...window.allTopTeams];
-            currentDraftOptions = [];
-    
-            while (currentDraftOptions.length < 3) {
-                const randomIndex = Math.floor(Math.random() * pool.length);
-                const randomTeam = pool[randomIndex];
-                if (!selectedAlliance.some(t => t.team_number === randomTeam.team_number) &&
-                    !currentDraftOptions.includes(randomTeam)) {
-                    currentDraftOptions.push(randomTeam);
-                }
-            }
-    
-            currentDraftOptions.forEach((team, index) => {
-                const teamCard = document.createElement('div');
-                teamCard.className = 'team-card';
-                teamCard.innerHTML = `
-                    <strong>${team.nickname || `Team ${team.team_number}`}</strong> (Team ${team.team_number})
-                    <button class="select-team-btn" data-index="${index}">Select Team</button>
-                    <button onclick="showTeamStats('${team.teamKey}')">Show Match Stats</button>
-                `;
-                topTeamsList.appendChild(teamCard);
+
+        const teamStats = {};
+        rankings.forEach(({ team_key, qualPoints }) => {
+            if (!teamStats[team_key]) teamStats[team_key] = 0;
+            teamStats[team_key] += qualPoints;
+        });
+
+        const allSortedTeams = Object.entries(teamStats).sort((a, b) => b[1] - a[1]);
+        const top100 = allSortedTeams.slice(0, 100);
+
+        const teamDetailMap = {};
+        const topTeamDetails = await Promise.all(top100.map(async ([teamKey]) => {
+            const res = await fetch(`https://www.thebluealliance.com/api/v3/team/${teamKey}`, {
+                headers: { 'X-TBA-Auth-Key': apiKey }
             });
-    
-            // Attach click handlers after rendering
-            document.querySelectorAll('.select-team-btn').forEach(btn => {
-                btn.addEventListener('click', e => {
-                    const index = e.target.getAttribute('data-index');
-                    const team = currentDraftOptions[index];
-                    selectTeam(team);
-                });
-            });
+            const data = await res.json();
+            const rankData = rankings.find(r => r.team_key === teamKey);
+            teamDetailMap[teamKey] = { ...data, rank: rankData ? rankData.rank : 'N/A' };
+            return { ...data, teamKey, rank: rankData ? rankData.rank : 'N/A' };
+        }));
+
+        window.allTopTeams = topTeamDetails;
+        draftNextTeam();
+
+    } catch (error) {
+        console.error('Error loading top teams:', error);
+        topTeamsList.innerHTML = '<div>Error loading teams. Please try again later.</div>';
+    }
+}
+
+function draftNextTeam() {
+    const topTeamsList = document.getElementById('teams');
+    topTeamsList.innerHTML = '';
+
+    const pool = [...window.allTopTeams];
+    currentDraftOptions = [];
+
+    while (currentDraftOptions.length < 3) {
+        const randomIndex = Math.floor(Math.random() * pool.length);
+        const randomTeam = pool[randomIndex];
+        if (!selectedAlliance.some(t => t.team_number === randomTeam.team_number) &&
+            !currentDraftOptions.includes(randomTeam)) {
+            currentDraftOptions.push(randomTeam);
         }
+    }
+
+    currentDraftOptions.forEach((team, index) => {
+        const teamCard = document.createElement('div');
+        teamCard.className = 'team-card';
+        teamCard.innerHTML = `
+            <strong>${team.nickname || `Team ${team.team_number}`}</strong> (Team ${team.team_number})
+            <p><strong>Rank:</strong> ${team.rank}</p> <!-- Display team rank here -->
+            <button class="select-team-btn" data-index="${index}">Select Team</button>
+            <button onclick="showTeamStats('${team.teamKey}')">Show Match Stats</button>
+        `;
+        topTeamsList.appendChild(teamCard);
+    });
+
+    // Attach click handlers after rendering
+    document.querySelectorAll('.select-team-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+            const index = e.target.getAttribute('data-index');
+            const team = currentDraftOptions[index];
+            selectTeam(team);
+        });
+    });
+}
     
         function selectTeam(team) {
             selectedAlliance.push(team);
@@ -366,7 +369,11 @@
 
 
         function generateOpposingAlliance() {
-            const remainingTeams = window.allTopTeams.filter(team =>
+            // Limit to top 10 teams
+            const top10teams = window.allTopTeams.slice(0, 10);
+
+            // Filter out teams already selected by the user
+            const remainingTeams = top10teams.filter(team =>
                 !selectedAlliance.some(sel => sel.team_number === team.team_number)
             );
 
@@ -403,72 +410,117 @@
         }
 
         function renderSimulateButton() {
-    const simulateBtn = document.createElement('button');
-    simulateBtn.textContent = "Simulate Match";
-    simulateBtn.style.cssText = `
-        display: block;
-        margin: 30px auto;
-        background: #28a745;
-        color: white;
-        padding: 12px 24px;
-        font-size: 16px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-    `;
-    simulateBtn.addEventListener('click', async () => {
-        if (!selectedAlliance || selectedAlliance.length !== 3 || !window.opposingAlliance || window.opposingAlliance.length !== 3) {
-            alert("Both alliances must be complete before simulation.");
-            return;
+            const simulateBtn = document.createElement('button');
+            simulateBtn.textContent = "Simulate Match";
+            simulateBtn.style.cssText = `
+                display: block;
+                margin: 30px auto;
+                background: #28a745;
+                color: white;
+                padding: 12px 24px;
+                font-size: 16px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+            `;
+            simulateBtn.addEventListener('click', async () => {
+                if (!selectedAlliance || selectedAlliance.length !== 3 || !window.opposingAlliance || window.opposingAlliance.length !== 3) {
+                    alert("Both alliances must be complete before simulation.");
+                    return;
+                }
+
+                document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+
+                const modal = document.getElementById("matchModal") || createMatchModal();
+                const modalContent = document.getElementById("modalContent");
+                modalContent.innerHTML = '<h2 style="margin-bottom: 20px; text-align: center;">Predicted Alliance Scores</h2>';
+
+                const allTeams = [...selectedAlliance, ...window.opposingAlliance];
+
+                const teamScores = await Promise.all(allTeams.map(async team => {
+                    const match = await getLastMatch(team.teamKey);
+                    if (!match) return null;
+
+                    const alliance = match.alliances.red.team_keys.includes(team.teamKey) ? 'red' : 'blue';
+                    const score = match.alliances[alliance].score;
+
+                    return {
+                        team: team,
+                        score
+                    };
+                }));
+
+                const redTeamData = teamScores.slice(0, 3).filter(t => t && t.score != null);
+                const blueTeamData = teamScores.slice(3, 6).filter(t => t && t.score != null);
+
+                const redScores = redTeamData.map(t => t.score);
+                const blueScores = blueTeamData.map(t => t.score);
+
+                const avgRed = redScores.length ? (redScores.reduce((a, b) => a + b, 0) / redScores.length).toFixed(1) : 'N/A';
+                const avgBlue = blueScores.length ? (blueScores.reduce((a, b) => a + b, 0) / blueScores.length).toFixed(1) : 'N/A';
+
+                const redChance = avgRed !== 'N/A' && avgBlue !== 'N/A' ? (parseFloat(avgRed) / (parseFloat(avgRed) + parseFloat(avgBlue)) * 100).toFixed(1) : 'N/A';
+                const blueChance = avgRed !== 'N/A' && avgBlue !== 'N/A' ? (parseFloat(avgBlue) / (parseFloat(avgRed) + parseFloat(avgBlue)) * 100).toFixed(1) : 'N/A';
+
+                // Power score calculation (scale of 1 to 100, divided by 300)
+                let powerScore = 'N/A';
+                let progressBarColor = 'gray';
+                let tooltipText = '';
+                let mvpText = '';
+
+                if (avgRed !== 'N/A' && redChance !== 'N/A' && blueChance !== 'N/A') {
+                    let baseScore = (parseFloat(avgRed) / 300) * 100;
+                    tooltipText += `Base Score: ${(baseScore).toFixed(1)} (from average score / 300)\n`;
+
+                    if (parseFloat(redChance) > parseFloat(blueChance)) {
+                        baseScore += 5;
+                        tooltipText += `+5 bonus: Higher win probability\n`;
+                    }
+
+                    if (redScores.every(score => score > 80)) {
+                        baseScore += 3;
+                        tooltipText += `+3 bonus: All team scores > 80\n`;
+                    }
+
+                    if (redScores.some(score => score > 120)) {
+                        baseScore += 2;
+                        tooltipText += `+2 bonus: At least one team scored > 120\n`;
+                    }
+
+                    powerScore = Math.min(100, baseScore).toFixed(1);
+
+                    const scoreVal = parseFloat(powerScore);
+                    if (scoreVal >= 70) progressBarColor = '#28a745';
+                    else if (scoreVal >= 40) progressBarColor = '#ffc107';
+                    else progressBarColor = '#dc3545';
+
+                    // MVP
+                    const mvp = redTeamData.reduce((max, t) => t.score > max.score ? t : max, redTeamData[0]);
+                    if (mvp) {
+                        const name = mvp.team.nickname || `Team ${mvp.team.team_number}`;
+                        mvpText = `<p style="margin-top: 10px;"><strong>🏅 Team MVP:</strong> ${name} (${mvp.team.team_number}) with ${mvp.score} pts</p>`;
+                    }
+                }
+
+                modalContent.innerHTML += `
+                    <div style="text-align: center;">
+                        <p><strong>Your Alliance Average Score:</strong> ${avgRed}</p>
+                        <p><strong>Opposing Alliance Average Score:</strong> ${avgBlue}</p>
+                        <p><strong>Your Alliance Win Probability:</strong> ${redChance}%</p>
+                        <p><strong>Opposing Alliance Win Probability:</strong> ${blueChance}%</p>
+                        <p style="font-size: 18px; margin-top: 15px;"><strong>Your Alliance Power Score:</strong> ${powerScore}/100</p>
+                        <div title="${tooltipText.trim().replace(/\n/g, '&#10;')}" style="margin: 10px auto; width: 80%; height: 25px; background: #eee; border-radius: 15px; overflow: hidden; cursor: help;">
+                            <div style="width: ${powerScore}%; height: 100%; background: ${progressBarColor}; transition: width 0.5s;"></div>
+                        </div>
+                        ${mvpText}
+                    </div>
+                `;
+
+                modal.style.display = 'flex';
+            });
+
+            document.getElementById('teams').appendChild(simulateBtn);
         }
-
-    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-
-        const modal = document.getElementById("matchModal") || createMatchModal();
-        const modalContent = document.getElementById("modalContent");
-        modalContent.innerHTML = '<h2 style="margin-bottom: 20px; text-align: center;">Predicted Alliance Scores</h2>'; // Clear previous content
-
-        // Fetch last match scores for all teams
-        const allTeams = [...selectedAlliance, ...window.opposingAlliance];
-
-        const teamScores = await Promise.all(allTeams.map(async team => {
-            const match = await getLastMatch(team.teamKey);
-            if (!match) return null;
-
-            const alliance = match.alliances.red.team_keys.includes(team.teamKey) ? 'red' : 'blue';
-            const score = match.alliances[alliance].score;
-
-            return {
-                team: team,
-                score
-            };
-        }));
-
-        // Filter valid scores and divide into alliances
-        const redScores = teamScores.slice(0, 3).map(t => t?.score).filter(score => score != null);
-        const blueScores = teamScores.slice(3, 6).map(t => t?.score).filter(score => score != null);
-
-        const avgRed = redScores.length ? (redScores.reduce((a, b) => a + b, 0) / redScores.length).toFixed(1) : 'N/A';
-        const avgBlue = blueScores.length ? (blueScores.reduce((a, b) => a + b, 0) / blueScores.length).toFixed(1) : 'N/A';
-
-        // Calculate win probabilities based on average scores
-        const redChance = avgRed !== 'N/A' && avgBlue !== 'N/A' ? (parseFloat(avgRed) / (parseFloat(avgRed) + parseFloat(avgBlue)) * 100).toFixed(1) : 'N/A';
-        const blueChance = avgRed !== 'N/A' && avgBlue !== 'N/A' ? (parseFloat(avgBlue) / (parseFloat(avgRed) + parseFloat(avgBlue)) * 100).toFixed(1) : 'N/A';
-
-        modalContent.innerHTML += `
-            <div style="text-align: center;">
-                <p><strong>Your Alliance Average Score:</strong> ${avgRed}</p>
-                <p><strong>Opposing Alliance Average Score:</strong> ${avgBlue}</p>
-                <p><strong>Your Alliance Win Probability:</strong> ${redChance}%</p>
-                <p><strong>Opposing Alliance Win Probability:</strong> ${blueChance}%</p>
-            </div>
-        `;
-
-        modal.style.display = 'flex';
-    });
-
-    document.getElementById('teams').appendChild(simulateBtn);
-}
 
 // Helper to create modal dynamically if it doesn't exist
 function createMatchModal() {
