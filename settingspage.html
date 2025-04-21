@@ -160,6 +160,11 @@
         </div>
 
         <div class="settings-option">
+            <label for="deviceID">Device ID</label>
+            <input type="text" id="deviceID" placeholder="Auto-generated if empty" style="margin-left: -10px;">
+        </div>        
+
+        <div class="settings-option">
             <label for="favTeam">Favorite Team Number</label>
             <input type="text" id="favTeam" placeholder="e.g., 2358" style="margin-left: -10px;">
         </div>
@@ -174,6 +179,7 @@
         <div class="settings-option btn-group">
             <button class="btn" onclick="saveSettings()">Save Settings</button>
             <button class="btn" onclick="resetSettings()">Reset All</button>
+            <button class="btn" onclick="loadUserDataFromSheet()">Load Data from Sheet</button>
         </div>
 
         <button class="btn back-button" onclick="location.href='homepage.html'">Back to Homepage</button>
@@ -183,29 +189,79 @@
         const usernameInput = document.getElementById('username');
         const favTeamInput = document.getElementById('favTeam');
         const notificationsCheckbox = document.getElementById('notifications');
-
+        const deviceIDInput = document.getElementById('deviceID');
+    
+        // Generate a new deviceID if not present
+        function generateDeviceID() {
+            return 'device-' + Math.random().toString(36).substr(2, 9);
+        }
+    
         // Load saved settings
         window.onload = () => {
             usernameInput.value = localStorage.getItem('username') || '';
             favTeamInput.value = localStorage.getItem('favTeam') || '';
             notificationsCheckbox.checked = localStorage.getItem('notifications') === 'true';
+    
+            const storedDeviceID = localStorage.getItem('deviceID') || generateDeviceID();
+            localStorage.setItem('deviceID', storedDeviceID);
+            deviceIDInput.value = storedDeviceID;
         };
-
+    
         function saveSettings() {
             localStorage.setItem('username', usernameInput.value);
             localStorage.setItem('favTeam', favTeamInput.value);
             localStorage.setItem('notifications', notificationsCheckbox.checked);
+    
+            const newDeviceID = deviceIDInput.value.trim();
+            if (newDeviceID) {
+                localStorage.setItem('deviceID', newDeviceID);
+            }
+    
             alert('Settings saved!');
         }
-
+    
         function resetSettings() {
             if (confirm("Are you sure you want to reset all settings?")) {
                 localStorage.removeItem('username');
                 localStorage.removeItem('favTeam');
                 localStorage.removeItem('notifications');
+                localStorage.removeItem('deviceID');
                 location.reload();
             }
         }
-    </script>
+
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSKKEEYW2TB1NXuDdKx5bNGstwka4VDOIfNPH5DsxYNa38HKyaTTFeeNPrX2AA5CVOVA/exec';
+
+        async function loadUserDataFromSheet() {
+            const storedDeviceID = localStorage.getItem('deviceID');
+            if (!storedDeviceID) {
+                alert("No device ID found. Please save your settings first.");
+                return;
+            }
+
+            try {
+                const res = await fetch(SCRIPT_URL);
+                const users = await res.json();
+
+                const user = users.find(u => u["Device ID"] === storedDeviceID);
+                if (user) {
+                    if (user["Name"]) {
+                        localStorage.setItem('username', user["Name"]);
+                        usernameInput.value = user["Name"];
+                    }
+                    if (user["Tokens"] !== undefined) {
+                        localStorage.setItem('tokens', user["Tokens"]);
+                    }
+
+                    alert("Data loaded from Google Sheet!");
+                } else {
+                    alert("No user found in sheet with this Device ID.");
+                }
+            } catch (error) {
+                console.error("Error loading data:", error);
+                alert("Failed to load data from Google Sheet.");
+            }
+        }
+    </script>    
 </body>
 </html>
