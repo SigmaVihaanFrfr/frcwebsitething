@@ -593,12 +593,6 @@ function draftNextTeam() {
         if (avgRed !== 'N/A' && redChance !== 'N/A' && blueChance !== 'N/A') {
             let baseScore = (parseFloat(avgRed) / 300) * 100;
             tooltipText += `Base Score: ${(baseScore).toFixed(1)} (from average score / 300)\n`;
-
-            if (parseFloat(redChance) > parseFloat(blueChance)) {
-                baseScore += 20;
-                tooltipText += `+20 bonus: Higher win probability\n`;
-            }
-
             if (redScores.every(score => score > 80)) {
                 baseScore += 3;
                 tooltipText += `+3 bonus: All team scores > 80\n`;
