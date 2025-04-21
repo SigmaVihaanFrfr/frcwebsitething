@@ -591,7 +591,7 @@ function draftNextTeam() {
         let mvpText = '';
 
         if (avgRed !== 'N/A' && redChance !== 'N/A' && blueChance !== 'N/A') {
-            let baseScore = (parseFloat(avgRed) / 300) * 100;
+            let baseScore = (parseFloat(avgRed) / 270) * 100;
             tooltipText += `Base Score: ${(baseScore).toFixed(1)} (from average score / 300)\n`;
             if (redScores.every(score => score > 80)) {
                 baseScore += 3;
