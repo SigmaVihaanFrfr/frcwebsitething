@@ -244,54 +244,73 @@
 
     // SCORE SYSTEM
     function getScore() {
-        return parseInt(localStorage.getItem('score')) || 0;
-    }
+    return parseInt(localStorage.getItem('score')) || 0;
+}
 
-    function setScore(value) {
-        localStorage.setItem('score', value);
-        updateScoreDisplay();
-    }
-
-    function updateScoreDisplay() {
-        document.getElementById("score-count").textContent = getScore();
-    }
-
-    if (localStorage.getItem('score') === null) {
-        localStorage.setItem('score', '0');
-    }
-
+function setScore(value) {
+    localStorage.setItem('score', value);
     updateScoreDisplay();
+}
 
-    document.getElementById("sendData").addEventListener("click", async () => {
-        const output = document.getElementById("output");
-        const username = localStorage.getItem("username");
-        const score = localStorage.getItem("score");
+function updateScoreDisplay() {
+    document.getElementById("score-count").textContent = getScore();
+}
 
-        if (!username || !score) {
-            output.textContent = "Error: Username or score not found in localStorage.";
-            return;
-        }
+// Generate or retrieve unique device ID
+function getDeviceId() {
+    let deviceId = localStorage.getItem("deviceId");
+    if (!deviceId) {
+        deviceId = crypto.randomUUID();  // Modern browsers only
+        localStorage.setItem("deviceId", deviceId);
+    }
+    return deviceId;
+}
 
-        const data = {
-            name: username,
-            score: parseInt(score)
-        };
+// Ensure score is initialized
+if (localStorage.getItem('score') === null) {
+    localStorage.setItem('score', '0');
+}
 
-        output.textContent = "Sending data: " + JSON.stringify(data, null, 2);
+// Ensure username is entered
+if (!localStorage.getItem("username")) {
+    const name = prompt("Enter your name:");
+    if (name) localStorage.setItem("username", name.trim());
+}
 
-        try {
-            await fetch(SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
+updateScoreDisplay();
 
-            output.textContent += "\n\nRequest sent!";
-        } catch (error) {
-            output.textContent = "Fetch Error:\n" + error;
-        }
-    });
+document.getElementById("sendData").addEventListener("click", async () => {
+    const output = document.getElementById("output");
+    const deviceId = getDeviceId();
+    const name = localStorage.getItem("username");
+    const score = localStorage.getItem("score");
+
+    if (!deviceId || !name || score === null) {
+        output.textContent = "Error: Missing deviceId, name, or score.";
+        return;
+    }
+
+    const data = {
+        deviceId,
+        name,
+        score: parseInt(score)
+    };
+
+    output.textContent = "Sending data: " + JSON.stringify(data, null, 2);
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        output.textContent += "\n\nRequest sent!";
+    } catch (error) {
+        output.textContent = "Fetch Error:\n" + error;
+    }
+});
 
     // Leaderboard Function
     async function updateLeaderboard() {

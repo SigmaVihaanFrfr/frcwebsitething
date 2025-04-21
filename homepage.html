@@ -216,7 +216,8 @@
         <!-- Token Display -->
         <div class="token-info" id="token-display"></div>
             <button class="tab-btn" onclick="location.href='settingspage.html'">Open Settings</button>     
-            <button class="tab-btn" onclick="location.href='bestalliancepage.html'">Alliance Building</button>     
+            <button class="tab-btn" onclick="location.href='bestalliancepage.html'">Alliance Building</button>    
+            <button class="tab-btn" onclick="location.href='TeamInfoPage.html'">Team Info</button>  
     </header>
 
     <div id="team-banner" style="display: none;">
@@ -673,12 +674,24 @@
                 if (favTeamGlobalRank) {
                     li.innerHTML = `
                         ${emoji} <strong>Your Favorite</strong>: ${favTeamData.nickname || `Team ${favTeamData.team_number}`} 
-                        (Team ${favTeamData.team_number}) is globally ranked <strong>#${favTeamGlobalRank}</strong>.
+                        (Team ${favTeamData.team_number}) is globally ranked <strong>#${favTeamGlobalRank ?? 'Unranked'}</strong>.
+                        <button 
+                            style="margin-left: 10px; padding: 4px 8px; background-color: #f0ad4e; color: black; border: none; border-radius: 4px; cursor: pointer;"
+                            onclick="window.location.href='TeamInfoPage.html?team=${favTeamData.team_number}'"
+                        >
+                            View Info
+                        </button>
                     `;
                 } else {
                     li.innerHTML = `
                         ${emoji} <strong>Your Favorite</strong>: ${favTeamData.nickname || `Team ${favTeamData.team_number}`} 
-                        (Team ${favTeamData.team_number}) is not in the top 100.
+                        (Team ${favTeamData.team_number}) is not in the top 100</strong>.
+                        <button 
+                            style="margin-left: 10px; padding: 4px 8px; background-color: #f0ad4e; color: black; border: none; border-radius: 4px; cursor: pointer;"
+                            onclick="window.location.href='TeamInfoPage.html?team=${favTeamData.team_number}'"
+                        >
+                            View Info
+                        </button>
                     `;
                 }
 
@@ -691,7 +704,15 @@
 
                 const li = document.createElement('li');
                 li.style.marginBottom = '10px';
-                li.innerHTML = `<strong>#${index + 1}</strong>: ${team.nickname || `Team ${team.team_number}`} (Team ${team.team_number})`;
+                li.innerHTML = `
+                    <strong>#${index + 1}</strong>: ${team.nickname || `Team ${team.team_number}`} (Team ${team.team_number})
+                    <button 
+                        style="margin-left: 10px; padding: 4px 8px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;"
+                        onclick="window.location.href='TeamInfoPage.html?team=${team.team_number}'"
+                    >
+                        View Info
+                    </button>
+                `;
                 topTeamsList.appendChild(li);
             });
 

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Team Info Viewer</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="browserlogo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #343a40;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    header {
+      background-color: #212529;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    h1 { font-size: 2rem; }
+    input, button {
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      margin: 10px;
+      border: none;
+    }
+    input {
+      width: 200px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    a {
+      color: #5bc0de;
+    }
+    .competition-box {
+      background-color: #5b5b5b;
+      padding: 20px;
+      border-radius: 8px;
+      background-image: linear-gradient(45deg, #6c757d 25%, transparent 25%), 
+                        linear-gradient(-45deg, #6c757d 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #6c757d 75%), 
+                        linear-gradient(-45deg, transparent 75%, #6c757d 75%);
+      background-size: 40px 40px;
+      background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
+      animation: stripeSlide 4s linear infinite;
+    }
+    @keyframes stripeSlide {
+      0% { background-position: 0 0, 0 20px, 20px -20px, -20px 0px; }
+      100% { background-position: 40px 0, 40px 20px, 60px -20px, 20px 0px; }
+    }
+    .team-section {
+      background-color: #212529;
+      border-radius: 10px;
+      margin: 20px auto;
+      padding: 15px;
+      text-align: left;
+      max-width: 600px;
+    }
+    .team-section h2 {
+      color: #ffc107;
+      margin-bottom: 8px;
+    }
+    .team-section p, .team-section table {
+      margin-bottom: 8px;
+    }
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px;
+      background: #dc3545;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      width: 200px;
+      text-align: center;
+    }
+    .back-btn:hover {
+      background: #c82333;
+    }
+    #loadingSpinner {
+      display: none;
+      margin-top: 20px;
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #007bff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: white;
+    }
+    table th, table td {
+      border: 1px solid #555;
+      padding: 8px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>FRC Team Info</h1>
+</header>
+
+<main>
+  <div class="competition-box">
+    <input type="text" id="teamNumberInput" placeholder="Enter Team Number" />
+    <button id="loadTeam">Load Team Info</button>
+
+    <div id="loadingSpinner"></div>
+    <div id="teamInfoSections"></div>
+
+    <a href="homepage.html" class="back-btn">Back to Main Page</a>
+  </div>
+</main>
+
+<script>
+    const API_KEY = "4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN";
+    
+    document.getElementById("loadTeam").addEventListener("click", async () => {
+      const teamNum = document.getElementById("teamNumberInput").value.trim();
+      const outputContainer = document.getElementById("teamInfoSections");
+      const loadingSpinner = document.getElementById("loadingSpinner");
+      outputContainer.innerHTML = "";
+    
+      if (!teamNum || isNaN(teamNum)) {
+        outputContainer.innerHTML = `<p>Please enter a valid numeric team number.</p>`;
+        return;
+      }
+    
+      loadingSpinner.style.display = "block";
+    
+      try {
+        const currentYear = new Date().getFullYear();
+        const teamKey = `frc${teamNum}`;
+    
+        const team = await fetchTBA(`/team/${teamKey}`);
+        const eventKeys = await fetchTBA(`/team/${teamKey}/events/${currentYear}/keys`);
+        const insights = await fetchTBA(`/team/${teamKey}/districts`);
+    
+        let allMatches = [];
+        for (const eventKey of eventKeys) {
+          const matches = await fetchTBA(`/team/${teamKey}/event/${eventKey}/matches`);
+          allMatches = allMatches.concat(matches);
+        }
+    
+        const { wins, losses, ties } = calculateRecord(allMatches, team.key);
+        const lastFiveMatches = allMatches.slice(-5).reverse();
+        const lastTenMatches = allMatches.slice(-10).reverse();
+    
+        const oprsEvent = eventKeys.length > 0 ? await fetchTBA(`/event/${eventKeys[0]}/oprs`) : null;
+        const teamOPR = oprsEvent?.oprs?.[teamKey] || "N/A";
+    
+        outputContainer.innerHTML = `
+          <div class="team-section">
+            <h2>Team ${team.team_number}: ${team.nickname || "N/A"}</h2>
+          </div>
+    
+          <div class="team-section">
+            <h2>Location & Rookie Year</h2>
+            <p>${team.city || "?"}, ${team.state_prov || ""} ${team.country || ""}</p>
+            <p>Rookie Year: ${team.rookie_year}</p>
+          </div>
+    
+          <div class="team-section">
+            <h2>Performance Stats</h2>
+            <p><strong>Event Count:</strong> ${eventKeys.length}</p>
+            <p><strong>OPR:</strong> ${typeof teamOPR === "number" ? teamOPR.toFixed(2) : teamOPR}</p>
+            <p><strong>Record:</strong> ${wins}-${losses}-${ties}</p>
+          </div>
+    
+          <div class="team-section">
+            <h2>Website & Key</h2>
+            <p>Website: <a href="${team.website}" target="_blank">${team.website || "N/A"}</a></p>
+            <p>Key: ${team.key}</p>
+          </div>
+    
+          <div class="team-section">
+            <h2>Win/Loss Record</h2>
+            <canvas id="recordChart" width="300" height="300"></canvas>
+            <p>Total Matches: ${allMatches.length}</p>
+          </div>
+    
+          <div class="team-section">
+            <h2>Score History (Last 10 Matches)</h2>
+            <canvas id="scoreChart" height="200"></canvas>
+          </div>
+    
+          <div class="team-section">
+            <h2>Last 5 Matches</h2>
+            <table>
+              <tr><th>Match</th><th>Result</th><th>Alliance</th><th>Score</th></tr>
+              ${lastFiveMatches.map(m => {
+                const color = m.alliances.red.team_keys.includes(team.key) ? 'red' : 'blue';
+                const teamScore = m.alliances[color].score;
+                const opponentScore = m.alliances[color === 'red' ? 'blue' : 'red'].score;
+                const result = teamScore > opponentScore ? 'Win' : teamScore < opponentScore ? 'Loss' : 'Tie';
+                return `<tr><td>${m.comp_level.toUpperCase()} ${m.match_number}</td><td>${result}</td><td>${color}</td><td>${teamScore} - ${opponentScore}</td></tr>`;
+              }).join('')}
+            </table>
+          </div>
+        `;
+    
+        drawChart(wins, losses, ties);
+        drawScoreChart(lastTenMatches, team.key);
+      } catch (err) {
+        outputContainer.innerHTML = `<p>Error: ${err.message}</p>`;
+      } finally {
+        loadingSpinner.style.display = "none";
+      }
+    });
+    
+    function calculateRecord(matches, teamKey) {
+      let wins = 0, losses = 0, ties = 0;
+      for (const match of matches) {
+        const color = match.alliances.red.team_keys.includes(teamKey) ? 'red' : 'blue';
+        const ourScore = match.alliances[color].score;
+        const theirScore = match.alliances[color === 'red' ? 'blue' : 'red'].score;
+    
+        if (ourScore > theirScore) wins++;
+        else if (ourScore < theirScore) losses++;
+        else ties++;
+      }
+      return { wins, losses, ties };
+    }
+    
+    function drawChart(wins, losses, ties) {
+      new Chart(document.getElementById("recordChart"), {
+        type: 'pie',
+        data: {
+          labels: ["Wins", "Losses", "Ties"],
+          datasets: [{
+            data: [wins, losses, ties],
+            backgroundColor: ["#28a745", "#dc3545", "#ffc107"],
+            borderColor: "#111",
+            borderWidth: 2,
+            hoverOffset: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: "white" }
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.label}: ${ctx.raw} match(es)`
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function drawScoreChart(matches, teamKey) {
+      const labels = matches.map((m, i) => `${m.comp_level.toUpperCase()} ${m.match_number}`);
+      const allianceScores = matches.map(m => {
+        const color = m.alliances.red.team_keys.includes(teamKey) ? 'red' : 'blue';
+        return m.alliances[color].score;
+      });
+      const opponentScores = matches.map(m => {
+        const color = m.alliances.red.team_keys.includes(teamKey) ? 'red' : 'blue';
+        const opponent = color === 'red' ? 'blue' : 'red';
+        return m.alliances[opponent].score;
+      });
+    
+      new Chart(document.getElementById("scoreChart"), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Team Score',
+              data: allianceScores,
+              borderColor: '#5bc0de',
+              backgroundColor: 'rgba(91, 192, 222, 0.2)',
+              tension: 0.3
+            },
+            {
+              label: 'Opponent Score',
+              data: opponentScores,
+              borderColor: '#f86c6b',
+              backgroundColor: 'rgba(248, 108, 107, 0.2)',
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: 'white' } }
+          },
+          scales: {
+            x: {
+              ticks: { color: 'white' }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { color: 'white' }
+            }
+          }
+        }
+      });
+    }
+    
+    async function fetchTBA(endpoint) {
+      const res = await fetch(`https://www.thebluealliance.com/api/v3${endpoint}`, {
+        headers: { "X-TBA-Auth-Key": API_KEY }
+      });
+      if (!res.ok) throw new Error(`Error fetching ${endpoint}`);
+      return await res.json();
+    }
+
+    function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+  }
+
+  // Auto-load team from URL parameter if present
+  window.addEventListener("DOMContentLoaded", () => {
+    const teamFromURL = getQueryParam("team");
+    if (teamFromURL) {
+      document.getElementById("teamNumberInput").value = teamFromURL;
+      document.getElementById("loadTeam").click();
+    }
+  });
+    </script>
+
+</body>
+</html>

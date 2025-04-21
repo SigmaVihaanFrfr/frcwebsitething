@@ -136,6 +136,16 @@
         document.getElementById("token-count").textContent = getTokens();
     }
 
+    // DEVICE ID SYSTEM
+    function getDeviceID() {
+        let deviceID = localStorage.getItem('deviceID');
+        if (!deviceID) {
+            deviceID = 'device-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9); // generate unique ID
+            localStorage.setItem('deviceID', deviceID);
+        }
+        return deviceID;
+    }
+
     if (localStorage.getItem('tokens') === null) {
         localStorage.setItem('tokens', '1000'); // Set initial tokens if not available
     }
@@ -145,9 +155,10 @@
     document.getElementById("sendData").addEventListener("click", async () => {
         const output = document.getElementById("output");
 
-        // Get the username and tokens from localStorage
+        // Get the username, tokens, and deviceID from localStorage
         const username = localStorage.getItem("username");
         const tokens = localStorage.getItem("tokens");
+        const deviceID = getDeviceID();
 
         if (!username || !tokens) {
             output.textContent = "Error: Username or tokens not found in localStorage.";
@@ -156,7 +167,8 @@
 
         const data = {
             name: username,
-            tokens: parseInt(tokens) // Ensure tokens are treated as a number
+            tokens: parseInt(tokens), // Ensure tokens are treated as a number
+            deviceID: deviceID // Include the device ID in the data
         };
 
         output.textContent = "Sending data: " + JSON.stringify(data, null, 2);
@@ -164,7 +176,7 @@
         try {
             const response = await fetch(SCRIPT_URL, {
                 method: "POST",
-                mode: "no-cors",
+                mode: "no-cors", // Change to cors to properly handle CORS
                 headers: {
                     "Content-Type": "application/json"
                 },
