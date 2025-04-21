@@ -506,10 +506,10 @@ function draftNextTeam() {
 
         function generateOpposingAlliance() {
             // Limit to top 10 teams
-            const top10teams = window.allTopTeams.slice(0, 10);
+            const top50teams = window.allTopTeams.slice(0, 50);
 
             // Filter out teams already selected by the user
-            const remainingTeams = top10teams.filter(team =>
+            const remainingTeams = top50teams.filter(team =>
                 !selectedAlliance.some(sel => sel.team_number === team.team_number)
             );
 
