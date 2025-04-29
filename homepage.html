@@ -61,7 +61,7 @@
 
         header {
             background-color: #212529;
-            padding: 20px;
+            padding: 120px 20px 20px; /* <-- Top padding increased */
             text-align: center;
         }
 
@@ -75,14 +75,19 @@
         }
 
         .token-info {
-            margin-top: 15px;
-            font-size: 1.2rem;
-            color: #ddd;
+            position: sticky; /* Use fixed positioning instead of absolute */
+            top: 20px;
+            right: 20px;
             padding: 10px 20px;
-            background-color: #5b5b5b;
-            border-radius: 5px;
-            display: inline-block;
+            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+            color: white;
+            font-size: 1.2rem;
+            border-radius: 50px; /* Pill shape */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Shadow effect */
+            backdrop-filter: blur(10px); /* Blurred background */
         }
+
+
 
         main {
             padding: 20px;
@@ -184,6 +189,26 @@
             background-color: #0056b3;
         }
 
+        .bottom-tabs {
+            position: fixed;
+            bottom: 50px; /* adjust if needed so it doesn't overlap footer */
+            width: 100%;
+            background-color: #212529;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .bottom-tabs .tab-btn {
+            flex: 1;
+            margin: 0 5px;
+            font-size: 0.9rem;
+            border-radius: 10px;
+            padding: 8px 5px;
+        }
+
         footer {
             background-color: #212529;
             padding: 10px;
@@ -191,7 +216,9 @@
             position: fixed;
             width: 100%;
             bottom: 0;
+            font-size: 0.8rem;
         }
+
 
         @media (max-width: 768px) {
             .tabs {
@@ -205,19 +232,229 @@
                 padding: 12px; /* Make buttons more tappable */
             }
         }
+        
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #212529;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+            opacity: 1; /* start fully visible */
+        }
+        
+        .fade-in-appear {
+          opacity: 0;
+          display: flex; /* force it to be shown again */
+          pointer-events: all;
+        }
+
+        .fade-in-appear.show {
+          opacity: 1;
+          transition: opacity 0.5s ease;
+        }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+          opacity: 0;
+          transition: opacity 1s ease;
+        }
+        .fade-in.show {
+          opacity: 1;
+        }
+        
+        #bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(33, 37, 41, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(0);
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            width: auto;
+            min-width: 250px;
+            max-width: 90%;
+            z-index: 1000;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .nav-btn {
+            background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            border: none;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 12px;
+            margin: 0 5px;
+            transition: transform 0.2s ease, color 0.2s ease, background 0.2s ease;
+            border-radius: 50%; /* Make it circular */
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .nav-btn.active {
+            color: #ffc107;
+        }
+
+        /* Responsive */
+        @media (min-width: 600px) {
+            #bottom-nav {
+                bottom: 30px;
+                padding: 12px 30px;
+                min-width: 300px;
+                max-width: 500px;
+            }
+        }
+
+        @media (min-width: 900px) {
+            #bottom-nav {
+                bottom: 40px;
+                padding: 14px 40px;
+                min-width: 400px;
+                max-width: 600px;
+            }
+
+            .nav-btn {
+                font-size: 2rem;
+            }
+        }
+        
+        #top-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(33, 37, 41, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(0);
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            width: auto;
+            min-width: 250px;
+            max-width: 90%;
+            z-index: 1000;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        #top-nav .nav-btn {
+            background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 12px;
+            margin: 0 5px;
+            transition: transform 0.2s ease, color 0.2s ease, background 0.2s ease;
+            border-radius: 50%; /* Make it circular */
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+        #top-nav .nav-btn:hover {
+            transform: scale(1.2);
+            background: rgba(255, 193, 7, 0.8); /* Highlight hover */
+        }
+
+
+        #top-nav .nav-btn.active {
+            color: #ffc107;
+        }
+
+        /* Responsive (similar to bottom nav) */
+        @media (min-width: 600px) {
+            #top-nav {
+                top: 30px;
+                padding: 12px 30px;
+                min-width: 300px;
+                max-width: 500px;
+            }
+        }
+
+        @media (min-width: 900px) {
+            #top-nav {
+                top: 40px;
+                padding: 14px 40px;
+                min-width: 400px;
+                max-width: 600px;
+            }
+
+            #top-nav .nav-btn {
+                font-size: 2rem;
+            }
+        }
 
     </style>
 </head>
 <body>
+    
+    <div id="loading-screen" style="opacity: 1;">
+        <img src="loadlogo.png" alt="Description of image" style="width: 250px; height: 250px;">
+      <div class="loader"></div>
+      <p>Loading...</p>
+    </div>
+    
+    <div id="top-nav">
+        <button class="nav-btn" onclick="navigateWithLoading('settingspage.html')">⚙️</button>
+        <button class="nav-btn" onclick="navigateWithLoading('bestalliancepage.html')">🤝</button>
+        <button class="nav-btn" onclick="navigateWithLoading('TeamInfoPage.html')">📋</button>
+        <button class="nav-btn" onclick="navigateWithLoading('homepage.html')">🏠</button> <!-- New Home button -->
+    </div>
     
     <header>
         <h1>Welcome to FRC Betting</h1>
         <p>Place your bets on FRC competition scores!</p>
         <!-- Token Display -->
         <div class="token-info" id="token-display"></div>
-            <button class="tab-btn" onclick="location.href='settingspage.html'">Open Settings</button>     
-            <button class="tab-btn" onclick="location.href='bestalliancepage.html'">Alliance Building</button>    
-            <button class="tab-btn" onclick="location.href='TeamInfoPage.html'">Team Info</button>  
     </header>
 
     <div id="team-banner" style="display: none;">
@@ -229,14 +466,6 @@
         <section class="competition-selection">
             <h2>Select Your Competition Region</h2>
             <!-- Tabs to switch between Active, Past, and Upcoming Competitions -->
-            <div class="tabs">
-                <button class="tab-btn active" onclick="openTab('active')">Active Competitions</button>
-                <button class="tab-btn" onclick="openTab('past')">Past Competitions</button>
-                <button class="tab-btn" onclick="openTab('upcoming')">Upcoming Competitions</button>
-                <button class="tab-btn" onclick="openTab('leaderboard')">Leaderboard</button>
-                <button class="tab-btn" onclick="openTab('top-teams')">Top 100 Teams</button>
-                <button class="tab-btn" onclick="openTab('update-log')">Update Log</button>
-            </div>
 
             <!-- Content for Active Competitions -->
             <div id="active" class="tab-content active">
@@ -263,22 +492,41 @@
             </div>
         </section>
         <!-- Content for Leaderboard -->
-            <div id="leaderboard" class="tab-content">
-                <section class="competition-selection" style="margin-top: 40px; margin-bottom: 40px;">
-                <h3 style="margin: 20px 0;">Top Token Holders</h3>
-                <ul id="leaderboard-list" style="list-style: none; padding: 0;"></ul>
-                <button class="tab-btn" onclick="location.href='leaderboard.html'">Send Your Stats</button>
-                </section>
+        <div id="leaderboard" class="tab-content">
+          <section class="competition-selection" style="margin-top: 40px; margin-bottom: 40px;">
+
+            <h3 style="margin: 20px 0;">Top Token Holders</h3>
+
+            <!-- New container for spinner + list -->
+            <div id="leaderboard-container" style="position: relative; padding: 20px; border-radius: 15px; background: rgba(0, 0, 0, 0.5);">
+
+              <div id="leaderboard-spinner" class="spinner" style="margin-bottom: 20px;"></div>
+
+              <ul id="leaderboard-list" class="fade-in" style="list-style: none; padding: 0; margin: 0; color: white; display: none;"></ul>
+
             </div>
+
+            <button class="tab-btn" onclick="navigateWithLoading('leaderboard.html')" style="margin-top: 20px;">Send Your Stats</button>
+
+          </section>
+        </div>
         <!-- Tab content for Update Log -->
-            <div id="update-log" class="tab-content">
-                <section class="competition-selection" style="margin-top: 40px; margin-bottom: 40px;">
-                <h2>Update Log</h2>
-                <ul id="update-log-list">
-                    <!-- Update log entries will be dynamically added here -->
-                </ul>
-                </section>
+        <div id="update-log" class="tab-content">
+          <section class="competition-selection" style="margin-top: 40px; margin-bottom: 40px;">
+            <h2>Update Log</h2>
+
+            <div id="update-log-container" style="position: relative; padding: 20px; border-radius: 15px; background: rgba(0, 0, 0, 0.5);">
+
+              <div id="update-log-spinner" class="spinner" style="margin-bottom: 20px;"></div>
+
+              <ul id="update-log-list" class="fade-in" style="list-style: none; padding: 0; margin: 0; color: white; display: none;">
+                <!-- Update log entries will be dynamically added here -->
+              </ul>
+
             </div>
+            
+          </section>
+        </div>
         <!-- Content For Teams -->
             <div id="top-teams" class="tab-content">
                 <section class="competition-selection" style="margin-top: 40px; margin-bottom: 40px;">
@@ -296,10 +544,41 @@
         </section>        
     </main>
 
+    <!-- Tabs at the bottom now -->
+    <!-- Bottom Navigation Tabs -->
+    <nav id="bottom-nav">
+        <button class="nav-btn" onclick="openTab('active')">🏆</button>
+        <button class="nav-btn" onclick="openTab('past')">📜</button>
+        <button class="nav-btn" onclick="openTab('upcoming')">⏳</button>
+        <button class="nav-btn" onclick="openTab('leaderboard')">🏅</button>
+        <button class="nav-btn" onclick="openTab('top-teams')">🚀</button>
+        <button class="nav-btn" onclick="openTab('update-log')">🛠️</button>
+    </nav>
+
+
     <footer>
         <p>2025 FRC Betting. NOT ASSOCIATED WITH FRC.</p>
     </footer>
 
+    <script>
+    let lastScrollTop = 0;
+    const bottomNav = document.getElementById('bottom-nav');
+
+    window.addEventListener('scroll', function() {
+        let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+        if (scrollTop > lastScrollTop) {
+            // Scrolling down → hide nav
+            bottomNav.style.transform = 'translateX(-50%) translateY(100px)';
+            bottomNav.style.opacity = '0';
+        } else {
+            // Scrolling up → show nav
+            bottomNav.style.transform = 'translateX(-50%) translateY(0)';
+            bottomNav.style.opacity = '1';
+        }
+        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // prevent negative scroll
+    }, false);
+    </script>
     <script>
         const apiKey = '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN';
         const currentDate = new Date().toISOString().split('T')[0];
@@ -372,7 +651,6 @@
                         <strong>${event.name}</strong><br>
                         <span style="font-size: 1rem;">${startDate} - ${endDate}</span>
                     `;
-
                     container.appendChild(eventElement);
                 });
             } else {
@@ -469,33 +747,43 @@
 
         async function updateLeaderboard() {
             const url = 'https://script.google.com/macros/s/AKfycbxSKKEEYW2TB1NXuDdKx5bNGstwka4VDOIfNPH5DsxYNa38HKyaTTFeeNPrX2AA5CVOVA/exec';
+            const spinner = document.getElementById('leaderboard-spinner');
+            const leaderboardList = document.getElementById('leaderboard-list');
 
             try {
+                spinner.style.display = "block"; // show spinner
+                leaderboardList.style.display = "none"; // hide list for now
+
                 const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
-                },
-                mode: "cors"
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    mode: "cors"
                 });
 
                 const leaderboard = await response.json();
-
                 leaderboard.sort((a, b) => b.Tokens - a.Tokens);
 
-                const leaderboardList = document.getElementById("leaderboard-list");
                 leaderboardList.innerHTML = "";
 
                 leaderboard.forEach((user, index) => {
-                const listItem = document.createElement("li");
-                listItem.style.margin = "10px 0";
-                listItem.innerHTML = `<strong>#${index + 1}</strong> - ${user.Name}: ${user.Tokens} tokens`;
-                leaderboardList.appendChild(listItem);
+                    const listItem = document.createElement("li");
+                    listItem.style.margin = "10px 0";
+                    listItem.innerHTML = `<strong>#${index + 1}</strong> - ${user.Name}: ${user.Tokens} tokens`;
+                    leaderboardList.appendChild(listItem);
                 });
+
+                spinner.style.display = "none"; // hide spinner
+                leaderboardList.style.display = "block"; // show list
+                setTimeout(() => {
+                    leaderboardList.classList.add('show'); // trigger fade-in
+                }, 50);
+
             } catch (err) {
                 console.error("Error fetching leaderboard:", err);
+                spinner.style.display = "none";
             }
-            }
+        }
+
 
     const TBA_AUTH_KEY = '4LGtwcoqrW5HYCVKHzrWGbMdfVirzVrMGmPFL4Mk7d1pCt6s7AjIaixPqLCEU9MN';
 
@@ -676,8 +964,7 @@
                         ${emoji} <strong>Your Favorite</strong>: ${favTeamData.nickname || `Team ${favTeamData.team_number}`} 
                         (Team ${favTeamData.team_number}) is globally ranked <strong>#${favTeamGlobalRank ?? 'Unranked'}</strong>.
                         <button 
-                            style="margin-left: 10px; padding: 4px 8px; background-color: #f0ad4e; color: black; border: none; border-radius: 4px; cursor: pointer;"
-                            onclick="window.location.href='TeamInfoPage.html?team=${favTeamData.team_number}'"
+                            style="margin-left: 10px; padding: 4px 8px; background-color: #f0ad4e; color: black; border: none; border-radius: 4px; cursor: pointer;" onclick="navigateWithLoading('TeamInfoPage.html?team=${favTeamData.team_number}')"
                         >
                             View Info
                         </button>
@@ -687,8 +974,7 @@
                         ${emoji} <strong>Your Favorite</strong>: ${favTeamData.nickname || `Team ${favTeamData.team_number}`} 
                         (Team ${favTeamData.team_number}) is not in the top 100</strong>.
                         <button 
-                            style="margin-left: 10px; padding: 4px 8px; background-color: #f0ad4e; color: black; border: none; border-radius: 4px; cursor: pointer;"
-                            onclick="window.location.href='TeamInfoPage.html?team=${favTeamData.team_number}'"
+                            style="margin-left: 10px; padding: 4px 8px; background-color: #f0ad4e; color: black; border: none; border-radius: 4px; cursor: pointer;" onclick="navigateWithLoading('TeamInfoPage.html?team=${favTeamData.team_number}')"
                         >
                             View Info
                         </button>
@@ -708,7 +994,7 @@
                     <strong>#${index + 1}</strong>: ${team.nickname || `Team ${team.team_number}`} (Team ${team.team_number})
                     <button 
                         style="margin-left: 10px; padding: 4px 8px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;"
-                        onclick="window.location.href='TeamInfoPage.html?team=${team.team_number}'"
+                        onclick="navigateWithLoading('TeamInfoPage.html?team=${favTeamData.team_number}')"
                     >
                         View Info
                     </button>
@@ -725,34 +1011,73 @@
 // Function to display the Update Log
 function displayUpdateLog() {
     const updateLogList = document.getElementById('update-log-list');
+    const spinner = document.getElementById('update-log-spinner');
     const sheetUrl = 'https://script.google.com/macros/s/AKfycbwbpkJu2Up_xI3TDd4g1nejGbkcdZC6savdpK3T7fx42XKBunwicLQ4PkCP86QIDB0/exec';  // Replace with your Google Apps Script URL
+
+    spinner.style.display = "block";   // Show spinner
+    updateLogList.style.display = "none"; // Hide list for now
 
     fetch(sheetUrl)
         .then(response => response.json())  // Assuming your Apps Script returns JSON data
         .then(updateLogs => {
             updateLogList.innerHTML = '';  // Clear existing content
 
-            // Check if updateLogs is an array and not empty
             if (Array.isArray(updateLogs) && updateLogs.length > 0) {
-                // Loop through the update logs and display them
                 updateLogs.forEach(log => {
                     const listItem = document.createElement('li');
+                    listItem.style.margin = "10px 0";
                     listItem.textContent = `v${log.Version} (${log.Date}) - ${log.Message}`;
                     updateLogList.appendChild(listItem);
                 });
             } else {
                 updateLogList.textContent = 'No update logs available.';
             }
+
+            spinner.style.display = "none";   // Hide spinner
+            updateLogList.style.display = "block"; // Show list
+            setTimeout(() => {
+                updateLogList.classList.add('show'); // Fade-in
+            }, 50);
+
         })
         .catch(error => {
             console.error('Error fetching update logs:', error);
+            spinner.style.display = "none";
             updateLogList.innerHTML = 'Error loading update log.';
+            updateLogList.style.display = "block";
         });
 }
 
 
+
     loadTopTeams();
     startTeamBannerNotifications();
+    </script>
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loading-screen');
+                loadingScreen.style.opacity = '0'; // fade out
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none'; // hide after fade
+                }, 500); // match your CSS transition duration (0.5s)
+            }, 500); // Optional slight delay before starting fade-out
+        });
+
+        function navigateWithLoading(targetPage) {
+            const loadingScreen = document.getElementById('loading-screen');
+            loadingScreen.style.display = 'flex'; // show loading screen
+            loadingScreen.style.opacity = '0'; // start transparent
+
+            // Force reflow
+            void loadingScreen.offsetWidth;
+
+            loadingScreen.style.opacity = '1'; // fade in
+
+            setTimeout(() => {
+                window.location.href = targetPage;
+            }, 600); // slightly longer than your fade-in transition
+        }
     </script>
 </body>
 </html>

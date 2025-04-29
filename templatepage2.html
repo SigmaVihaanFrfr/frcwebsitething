@@ -32,8 +32,19 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Roboto', sans-serif; background-color: #343a40; color: white; text-align: center; }
-    header { background-color: #212529; padding: 20px; position: relative; }
-    #token-display { position: absolute; top: 20px; right: 20px; background-color: #17a2b8; padding: 10px 15px; border-radius: 5px; font-size: 16px; }
+    header { background-color: #212529; padding: 120px 20px 20px; position: relative; }
+    #token-display {
+        position: sticky; /* Use fixed positioning instead of absolute */
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+        color: white;
+        font-size: 1.2rem;
+        border-radius: 50px; /* Pill shape */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Shadow effect */
+        backdrop-filter: blur(10px); /* Blurred background */
+    }
     main { padding: 20px; }
     .match-box {             background-color: #5b5b5b;
             background-image: repeating-linear-gradient(
@@ -68,9 +79,85 @@
     .video-container { margin-top: 20px; }
     iframe { width: 100%; max-width: 560px; height: 315px; border: none; }
     .bet-container button.locked-selection {background-color: #28a745 !important; color: white; border: 2px solid #ffffff80;}
+    #top-nav {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        background: rgba(33, 37, 41, 0.7);
+        backdrop-filter: blur(10px);
+        padding: 10px 20px;
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(0);
+        border-radius: 30px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        width: auto;
+        min-width: 250px;
+        max-width: 90%;
+        z-index: 1000;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    #top-nav .nav-btn {
+        background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+        border: none;
+        color: white;
+        font-size: 1.8rem;
+        cursor: pointer;
+        padding: 12px;
+        margin: 0 5px;
+        transition: transform 0.2s ease, color 0.2s ease, background 0.2s ease;
+        border-radius: 50%; /* Make it circular */
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+
+    #top-nav .nav-btn:hover {
+        transform: scale(1.2);
+        background: rgba(255, 193, 7, 0.8); /* Highlight hover */
+    }
+
+
+    #top-nav .nav-btn.active {
+        color: #ffc107;
+    }
+
+    /* Responsive (similar to bottom nav) */
+    @media (min-width: 600px) {
+        #top-nav {
+            top: 30px;
+            padding: 12px 30px;
+            min-width: 300px;
+            max-width: 500px;
+        }
+    }
+
+    @media (min-width: 900px) {
+        #top-nav {
+            top: 40px;
+            padding: 14px 40px;
+            min-width: 400px;
+            max-width: 600px;
+        }
+
+        #top-nav .nav-btn {
+            font-size: 2rem;
+        }
+    }
   </style>
 </head>
 <body>
+    <div id="top-nav">
+        <button class="nav-btn" onclick="location.href='settingspage.html'">⚙️</button>
+        <button class="nav-btn" onclick="location.href='bestalliancepage.html'">🤝</button>
+        <button class="nav-btn" onclick="location.href='TeamInfoPage.html'">📋</button>
+        <button class="nav-btn" onclick="location.href='homepage.html'">🏠</button> <!-- New Home button -->
+    </div>
 
   <header>
     <h1 id="match-title">Match Details</h1>
@@ -79,7 +166,6 @@
   
   <main>
     <div class="match-box">
-      <a id="back-to-main" class="back-btn" href="homepage.html">Back to Main Page</a>
   
       <!-- New Event Page Button -->
       <a id="back-to-event" class="back-btn" href="#">Back to Event Page</a>

@@ -11,6 +11,69 @@
     <title>Google Sheets POST Test</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #212529;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+            opacity: 1; /* start fully visible */
+        }
+        
+        .fade-in-appear {
+          opacity: 0;
+          display: flex; /* force it to be shown again */
+          pointer-events: all;
+        }
+
+        .fade-in-appear.show {
+          opacity: 1;
+          transition: opacity 0.5s ease;
+        }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+          opacity: 0;
+          transition: opacity 1s ease;
+        }
+        .fade-in.show {
+          opacity: 1;
+        }
+        
+        
         * {
             margin: 0;
             padding: 0;
@@ -28,7 +91,7 @@
 
         header {
             background-color: #212529;
-            padding: 20px;
+            padding: 120px 20px 20px;
             border-radius: 8px;
         }
 
@@ -98,9 +161,94 @@
         .back-btn:hover {
             background: #c82333;
         }
+        
+        #top-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(33, 37, 41, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(0);
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            width: auto;
+            min-width: 250px;
+            max-width: 90%;
+            z-index: 1000;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        #top-nav .nav-btn {
+            background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 12px;
+            margin: 0 5px;
+            transition: transform 0.2s ease, color 0.2s ease, background 0.2s ease;
+            border-radius: 50%; /* Make it circular */
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+        #top-nav .nav-btn:hover {
+            transform: scale(1.2);
+            background: rgba(255, 193, 7, 0.8); /* Highlight hover */
+        }
+
+
+        #top-nav .nav-btn.active {
+            color: #ffc107;
+        }
+
+        /* Responsive (similar to bottom nav) */
+        @media (min-width: 600px) {
+            #top-nav {
+                top: 30px;
+                padding: 12px 30px;
+                min-width: 300px;
+                max-width: 500px;
+            }
+        }
+
+        @media (min-width: 900px) {
+            #top-nav {
+                top: 40px;
+                padding: 14px 40px;
+                min-width: 400px;
+                max-width: 600px;
+            }
+
+            #top-nav .nav-btn {
+                font-size: 2rem;
+            }
+        }
+
     </style>
 </head>
 <body>
+    
+    <div id="top-nav">
+        <button class="nav-btn" onclick="navigateWithLoading('settingspage.html')">⚙️</button>
+        <button class="nav-btn" onclick="navigateWithLoading('bestalliancepage.html')">🤝</button>
+        <button class="nav-btn" onclick="navigateWithLoading('TeamInfoPage.html')">📋</button>
+        <button class="nav-btn" onclick="navigateWithLoading('homepage.html')">🏠</button> <!-- New Home button -->
+    </div>
+    
+    <div id="loading-screen" style="opacity: 1;">
+        <img src="loadlogo.png" alt="Description of image" style="width: 250px; height: 250px;">
+      <div class="loader"></div>
+      <p>Loading...</p>
+    </div>
 
 <header>
     <h1>Send Leaderboard Stats</h1>
@@ -114,11 +262,57 @@
 
         <button id="sendData">Send Your Token Stats</button>
         <pre id="output">Click the button to send your current token stats.</pre>
-
-        <a href="homepage.html" class="back-btn">Back to Main Page</a>
     </div>
 </main>
+<script>
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loading-screen');
+            loadingScreen.style.opacity = '0'; // fade out
+            setTimeout(() => {
+                loadingScreen.style.display = 'none'; // hide after fade
+            }, 500); // match your CSS transition duration (0.5s)
+        }, 500); // Optional slight delay before starting fade-out
+    });
 
+    function navigateWithLoading(targetPage) {
+        const loadingScreen = document.getElementById('loading-screen');
+        loadingScreen.style.display = 'flex'; // show loading screen
+        loadingScreen.style.opacity = '0'; // start transparent
+
+        // Force reflow
+        void loadingScreen.offsetWidth;
+
+        loadingScreen.style.opacity = '1'; // fade in
+
+        setTimeout(() => {
+            window.location.href = targetPage;
+        }, 600); // slightly longer than your fade-in transition
+    }
+    
+    document.querySelectorAll('a, button').forEach(element => {
+        element.addEventListener('click', function(event) {
+            const href = this.getAttribute('href') || this.onclick ? true : false;
+
+            if (href) {
+                event.preventDefault(); // stop the page from immediately leaving
+
+                const loadingScreen = document.getElementById('loading-screen');
+                loadingScreen.style.display = 'flex';
+                loadingScreen.classList.add('fade-in-appear', 'show');
+
+                setTimeout(() => {
+                    if (this.tagName.toLowerCase() === 'a') {
+                        window.location.href = this.href;
+                    } else if (this.onclick) {
+                        this.onclick();
+                    }
+                }, 500); // wait for fade-in before navigating
+            }
+        });
+    });
+
+</script>
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxSKKEEYW2TB1NXuDdKx5bNGstwka4VDOIfNPH5DsxYNa38HKyaTTFeeNPrX2AA5CVOVA/exec";
 
